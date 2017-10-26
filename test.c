@@ -1,0 +1,289 @@
+/* libncgc
+ * Copyright (C) 2017 angelsl
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#ifdef __MINGW32__
+#define __USE_MINGW_ANSI_STDIO 1
+#endif
+
+#include <stdio.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <string.h>
+#include <inttypes.h>
+
+#include "include/ncgc/ntrcard.h"
+
+extern const char _binary_ntr_blowfish_bin_start;
+
+enum op_type {
+    COMMAND, DELAY, RESET, SEED_KEY2
+};
+
+const char *op_type_str(enum op_type op_type) {
+    switch (op_type) {
+        case COMMAND:
+            return "COMMAND";
+        case DELAY:
+            return "DELAY";
+        case RESET:
+            return "RESET";
+        case SEED_KEY2:
+            return "SEED_KEY2";
+        default:
+            return "UNKNOWN";
+    }
+}
+
+struct op {
+    size_t index;
+    enum op_type op_type;
+    union {
+        struct {
+            uint64_t cmd;
+            uint32_t size;
+            uint32_t flags;
+        } command;
+        struct {
+            uint64_t x;
+            uint64_t y;
+        } seed;
+        uint32_t delay;
+    };
+};
+
+size_t cur_op = 0;
+struct op ops[] = {
+    { /* cur_op = 0 */
+        .op_type = RESET
+    }, { /* cur_op = 1 */
+        .op_type = COMMAND,
+        .command = { .cmd = 0x9F, .size = 0x2000, .flags = 0x8000000 }
+    }, { /* cur_op = 2 */
+        .op_type = DELAY,
+        .delay = 0x40000
+    }, { /* cur_op = 3 */
+        .op_type = COMMAND,
+        .command = { .cmd = 0x90, .size = 0x4, .flags = 0x8000000 }
+    }, { /* cur_op = 4 */
+        .op_type = COMMAND,
+        .command = { .cmd = 0x00, .size = 0x1000, .flags = 0x8000000 }
+    }, { /* cur_op = 5 */
+        .op_type = COMMAND,
+        .command = { .cmd = 0x00469D0373A4113C, .size = 0x0, .flags = 0x10657 }
+    }, { /* cur_op = 6 */
+        .op_type = COMMAND,
+        .command = { .cmd = 0x9F94AF773B6FF707, .size = 0x0, .flags = 0x18000910 }
+    }, { /* cur_op = 7 */
+        .op_type = SEED_KEY2,
+        .seed = { .x = 0x64CD6760E8, .y = 0x5C879B9B05 }
+    }, { /* cur_op = 8 */
+        .op_type = COMMAND,
+        .command = { .cmd = 0xFE1F2CF157E16CF6, .size = 0x4, .flags = 0x18006910 }
+    }, { /* cur_op = 9 */
+        .op_type = COMMAND,
+        .command = { .cmd = 0xA5681E1A5F6122B3, .size = 0x0, .flags = 0x18006910 }
+    }, { /* cur_op = 10 */
+        .op_type = COMMAND,
+        .command = { .cmd = 0xB8, .size = 0x4, .flags = 0x416657 }
+    },
+
+};
+const size_t n_ops = sizeof(ops)/sizeof(struct op);
+
+bool failed = false;
+
+static void mmemcpy(void *dest, const void* src, size_t dest_sz, size_t count_sz, size_t offs) {
+    if (!dest_sz || !count_sz || offs > dest_sz) {
+        return;
+    }
+    dest_sz -= offs;
+    memcpy((char *)dest + offs, src, dest_sz < count_sz ? dest_sz : count_sz);
+}
+
+static void write_response(size_t op_no, void *const dest, const uint32_t dest_size) {
+    switch (op_no) {
+        default:
+            failed = true;
+            fprintf(stderr, "FAIL: COMMAND (%llu) no response\n", op_no);
+            break;
+        case 1:
+            break;
+        case 3:
+        case 8:
+        case 10: {
+            mmemcpy(dest, "\xC2\x07\0\0", dest_size, 4, 0);
+            break;
+        }
+        case 4: {
+            mmemcpy(dest, "ABXK", dest_size, 4, 0xC);
+            mmemcpy(dest, "\0", dest_size, 1, 0x13);
+            mmemcpy(dest, "\x57\x66\x41\0", dest_size, 4, 0x60);
+            mmemcpy(dest, "\xf8\x08\x18\x08", dest_size, 4, 0x64);
+            break;
+        }
+    }
+}
+
+static struct op *next_op(enum op_type op_type) {
+    if (cur_op < n_ops) {
+        ops[cur_op].index = cur_op;
+        struct op* op = ops + cur_op++;
+        if (op->op_type != op_type) {
+            failed = true;
+            fprintf(stderr, "FAIL: %s (%llu) expected, %s actually\n", op_type_str(op_type), op->index, op_type_str(op->op_type));
+            return NULL;
+        }
+        return op;
+    } else {
+        failed = true;
+        fprintf(stderr, "FAIL: ran out of ops\n");
+        return NULL;
+    }
+}
+
+static int32_t send_command(const ncgc_nplatform_data_t pdata, const uint64_t cmd, const uint32_t read_size,
+        void *const dest, const uint32_t dest_size, const ncgc_nflags_t flags) {
+    (void)pdata; (void)dest; (void)dest_size;
+    #ifdef PRINT
+    printf(
+        "{ /* cur_op = %llu */\n"
+        "    .op_type = COMMAND,\n"
+        "    .command = { .cmd = 0x%" PRIX64 ", .size = 0x%" PRIX32 ", .flags = 0x%" PRIX32 " }\n"
+        "}, ",
+        cur_op, cmd, read_size, flags.flags
+    );
+    #endif
+
+    struct op *op = next_op(COMMAND);
+    if (op) {
+        if (op->command.cmd != cmd) {
+            failed = true;
+            fprintf(stderr, "FAIL: COMMAND (%llu) expected cmd 0x%" PRIX64 ", actual cmd 0x%" PRIX64 "\n", op->index, op->command.cmd, cmd);
+        } else if (read_size) {
+            write_response(op->index, dest, dest_size);
+        }
+
+        if (op->command.size != read_size) {
+            failed = true;
+            fprintf(stderr, "FAIL: COMMAND (%llu) expected size 0x%" PRIX32 ", actual size 0x%" PRIX32 "\n", op->index, op->command.size, read_size);
+        }
+
+        if (op->command.flags != flags.flags) {
+            failed = true;
+            fprintf(stderr, "FAIL: COMMAND (%llu) expected flags 0x%" PRIX32 ", actual flags 0x%" PRIX32 "\n", op->index, op->command.flags, flags.flags);
+        }
+    }
+    return read_size;
+}
+
+static void io_delay(uint32_t delay) {
+    #ifdef PRINT
+    printf(
+        "{ /* cur_op = %llu */\n"
+        "    .op_type = DELAY,\n"
+        "    .delay = 0x%" PRIX32 "\n"
+        "}, ",
+        cur_op, delay
+    );
+    #endif
+
+    struct op *op = next_op(DELAY);
+    if (op) {
+        if (op->delay != delay) {
+            failed = true;
+            fprintf(stderr, "FAIL: DELAY (%llu) expected delay 0x%" PRIX32 ", actual delay 0x%" PRIX32 "\n", op->index, op->delay, delay);
+        }
+    }
+}
+
+static void seed_key2(ncgc_nplatform_data_t pdata, uint64_t x, uint64_t y) {
+    (void)pdata;
+    #ifdef PRINT
+    printf(
+        "{ /* cur_op = %llu */\n"
+        "    .op_type = SEED_KEY2,\n"
+        "    .seed = { .x = 0x%" PRIX64 ", .y = 0x%" PRIX64 " }\n"
+        "}, ",
+        cur_op, x, y
+    );
+    #endif
+
+    struct op *op = next_op(SEED_KEY2);
+    if (op) {
+        if (op->seed.x != x) {
+            failed = true;
+            fprintf(stderr, "FAIL: SEED_KEY2 (%llu) expected x 0x%" PRIX64 ", actual x 0x%" PRIX64 "\n", op->index, op->seed.x, x);
+        }
+
+        if (op->seed.y != y) {
+            failed = true;
+            fprintf(stderr, "FAIL: SEED_KEY2 (%llu) expected y 0x%" PRIX64 ", actual y 0x%" PRIX64 "\n", op->index, op->seed.y, y);
+        }
+    }
+}
+
+static int32_t reset(ncgc_nplatform_data_t pdata) {
+    (void)pdata;
+    #ifdef PRINT
+    printf(
+        "{ /* cur_op = %llu */\n"
+        "    .op_type = RESET\n"
+        "}, ",
+        cur_op
+    );
+    #endif
+
+    next_op(RESET);
+    return 0;
+}
+
+static ncgc_ncard_t card = {
+    .platform = {
+        .data = { .int_data = 0 },
+        .reset = reset,
+        .send_command = send_command,
+        .io_delay = io_delay,
+        .seed_key2 = seed_key2,
+        .hw_key2 = true
+    }
+};
+
+int main() {
+    int32_t r;
+    if ((r = ncgc_ninit(&card, NULL))) {
+        fprintf(stderr, "FAIL: ncgc_ninit = %d\n", r);
+    }
+
+    ncgc_nsetup_blowfish(&card, (void *) &_binary_ntr_blowfish_bin_start);
+
+    if ((r = ncgc_nbegin_key1(&card))) {
+        fprintf(stderr, "FAIL: ncgc_nbegin_key1 = %d\n", r);
+    }
+
+    if ((r = ncgc_nbegin_key2(&card))) {
+        fprintf(stderr, "FAIL: ncgc_nbegin_key2 = %d\n", r);
+    }
+    #ifdef PRINT
+    puts("");
+    #endif
+    if (failed) {
+        fprintf(stderr, "Failed.\n");
+    } else {
+        fprintf(stderr, "Success.\n");
+    }
+    return failed;
+}
