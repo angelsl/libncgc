@@ -69,24 +69,28 @@ static uint64_t key1_construct(ncgc_ncard_t* card, const uint8_t cmdarg, const u
     return BSWAP64(cmd);
 }
 
-static uint32_t key1_cmd(ncgc_ncard_t* card, const uint8_t cmdarg, const uint16_t arg, const uint32_t ij,
+static int32_t key1_cmd(ncgc_ncard_t* card, const uint8_t cmdarg, const uint16_t arg, const uint32_t ij,
     const uint32_t read_size, void *const dest, const uint32_t flags) {
     uint64_t cmd = key1_construct(card, cmdarg, arg, ij);
     return P(card).send_command(PDATA(card), cmd, read_size, dest, read_size, F(flags));
 }
 
-static void read_header(ncgc_ncard_t* card, void *const buf) {
+static int32_t read_header(ncgc_ncard_t* card, void *const buf) {
     char ourbuf[0x68] = {0};
     char *usedbuf = buf ? buf : ourbuf;
 
-    P(card).send_command(PDATA(card),
+    int32_t r = P(card).send_command(PDATA(card),
         CMD_RAW_HEADER_READ, 0x1000, usedbuf, buf ? 0x1000 : sizeof(ourbuf),
         F(FLAGS_CLK_SLOW));
+    if (r < 0) {
+        return r;
+    }
 
     card->hdr.game_code = *(uint32_t *)(usedbuf + 0xC);
     card->hdr.key1_romcnt = card->key1.romcnt = *(uint32_t *)(usedbuf + 0x64);
     card->hdr.key2_romcnt = card->key2.romcnt = *(uint32_t *)(usedbuf + 0x60);
     card->key2.seed_byte = *(uint8_t *)(usedbuf + 0x13);
+    return 0;
 }
 
 static void seed_key2(ncgc_ncard_t *const card) {
@@ -109,10 +113,19 @@ int32_t ncgc_ninit(ncgc_ncard_t *const card, void *const buf) {
         return -1;
     }
 
-    P(card).send_command(PDATA(card), CMD_RAW_DUMMY, 0x2000, NULL, 0, F(FLAGS_CLK_SLOW));
+    if ((r = P(card).send_command(PDATA(card), CMD_RAW_DUMMY, 0x2000, NULL, 0, F(FLAGS_CLK_SLOW))) < 0) {
+        return -r+100;
+    }
+
     P(card).io_delay(0x40000);
-    P(card).send_command(PDATA(card), CMD_RAW_CHIPID, 4, &card->raw_chipid, 4, F(FLAGS_CLK_SLOW));
-    read_header(card, buf);
+    
+    if ((r = P(card).send_command(PDATA(card), CMD_RAW_CHIPID, 4, &card->raw_chipid, 4, F(FLAGS_CLK_SLOW))) < 0) {
+        return -r+200;
+    }
+
+    if ((r = read_header(card, buf)) < 0) {
+        return -r+300;
+    }
     return 0;
 }
 
@@ -128,27 +141,34 @@ void ncgc_nsetup_blowfish(ncgc_ncard_t* card, uint32_t ps[NCGC_NBF_PS_N32]) {
 }
 
 int32_t ncgc_nbegin_key1(ncgc_ncard_t* card) {
+    int32_t r;
     card->key2.mn = 0xC99ACE;
     card->key1.ij = 0x11A473;
     card->key1.k = 0x39D46;
     card->key1.l = 0;
 
     // 00 KK KK 0K JJ IJ II 3C
-    P(card).send_command(PDATA(card),
+    if ((r = P(card).send_command(PDATA(card),
         CMD_RAW_ACTIVATE_KEY1 |
             ((card->key1.ij & 0xFF0000ull) >> 8) | ((card->key1.ij & 0xFF00ull) << 8) | ((card->key1.ij & 0xFFull) << 24) |
             ((card->key1.k & 0xF0000ull) << 16) | ((card->key1.k & 0xFF00ull) << 32) | ((card->key1.k & 0xFFull) << 48),
-        0, NULL, 0, F(card->key2.romcnt & (FLAGS_CLK_SLOW | FLAGS_DELAY2_MASK | FLAGS_DELAY1_MASK)));
+        0, NULL, 0, F(card->key2.romcnt & (FLAGS_CLK_SLOW | FLAGS_DELAY2_MASK | FLAGS_DELAY1_MASK)))) < 0) {
+        return -r+100;
+    }
 
     card->key1.romcnt = (card->key2.romcnt & (FLAGS_WR | FLAGS_CLK_SLOW)) |
         ((card->hdr.key1_romcnt & (FLAGS_CLK_SLOW | FLAGS_DELAY1_MASK)) +
         ((card->hdr.key1_romcnt & FLAGS_DELAY2_MASK) >> 16)) | FLAGS_SEC_LARGE;
-    key1_cmd(card, CMD_KEY1_INIT_KEY2, card->key1.l, card->key2.mn, 0, NULL, card->key1.romcnt);
+    if ((r = key1_cmd(card, CMD_KEY1_INIT_KEY2, card->key1.l, card->key2.mn, 0, NULL, card->key1.romcnt)) < 0) {
+        return -r+200;
+    }
 
     seed_key2(card);
     card->key1.romcnt |= FLAGS_SEC_EN | FLAGS_SEC_DAT;
 
-    key1_cmd(card, CMD_KEY1_CHIPID, card->key1.l, card->key1.ij, 4, &card->key1.chipid, card->key1.romcnt);
+    if ((r = key1_cmd(card, CMD_KEY1_CHIPID, card->key1.l, card->key1.ij, 4, &card->key1.chipid, card->key1.romcnt)) < 0) {
+        return -r+300;
+    }
     if (card->raw_chipid != card->key1.chipid) {
         card->encryption_state = NCGC_NUNKNOWN;
         return -1;
@@ -170,11 +190,16 @@ void ncgc_nread_secure_area(ncgc_ncard_t* card, void *const dest) {
 }
 
 int32_t ncgc_nbegin_key2(ncgc_ncard_t* card) {
-    key1_cmd(card, CMD_KEY1_ACTIVATE_KEY2, card->key1.l, card->key1.ij, 0, NULL, card->key1.romcnt);
+    int32_t r;
+    if ((r = key1_cmd(card, CMD_KEY1_ACTIVATE_KEY2, card->key1.l, card->key1.ij, 0, NULL, card->key1.romcnt)) < 0) {
+        return -r+100;
+    }
     card->key2.romcnt = card->hdr.key2_romcnt & (FLAGS_CLK_SLOW | FLAGS_SEC_CMD | FLAGS_DELAY2_MASK | FLAGS_SEC_EN | FLAGS_SEC_DAT | FLAGS_DELAY1_MASK);
 
-    P(card).send_command(PDATA(card),
-        CMD_KEY2_CHIPID, 4, &card->key2.chipid, 4, F(card->key2.romcnt));
+    if ((r = P(card).send_command(PDATA(card),
+        CMD_KEY2_CHIPID, 4, &card->key2.chipid, 4, F(card->key2.romcnt))) < 0) {
+        return -r+200;
+    }
     if (card->key2.chipid != card->raw_chipid) {
         card->encryption_state = NCGC_NUNKNOWN;
         return -1;
