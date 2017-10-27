@@ -81,7 +81,7 @@ static int32_t read_header(ncgc_ncard_t* card, void *const buf) {
 
     int32_t r = P(card).send_command(PDATA(card),
         CMD_RAW_HEADER_READ, 0x1000, usedbuf, buf ? 0x1000 : sizeof(ourbuf),
-        F(FLAGS_CLK_SLOW));
+        F(FLAGS_CLK_SLOW | FLAGS_DELAY1(0x1FFF) | FLAGS_DELAY2(0x3F)));
     if (r < 0) {
         return r;
     }
