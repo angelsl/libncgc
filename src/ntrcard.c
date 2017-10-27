@@ -113,7 +113,7 @@ int32_t ncgc_ninit(ncgc_ncard_t *const card, void *const buf) {
         return -1;
     }
 
-    if ((r = P(card).send_command(PDATA(card), CMD_RAW_DUMMY, 0x2000, NULL, 0, F(FLAGS_CLK_SLOW))) < 0) {
+    if ((r = P(card).send_command(PDATA(card), CMD_RAW_DUMMY, 0x2000, NULL, 0, F(FLAGS_CLK_SLOW | FLAGS_DELAY2(0x18)))) < 0) {
         return -r+100;
     }
 
