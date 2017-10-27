@@ -4,7 +4,7 @@ Cross-platform <strong>N</strong>TR/<strong>C</strong>TR <strong>g</strong>ame<s
 
 ## Usage
 
-See [https://github.com/angelsl/libncgc/blob/master/include/ncgc/ntrcard.h](ntrcard.h). Perhaps the [test](https://github.com/angelsl/libncgc/blob/master/test.c) will help too.
+See [ntrcard.h](https://github.com/angelsl/libncgc/blob/master/include/ncgc/ntrcard.h). Perhaps the [test](https://github.com/angelsl/libncgc/blob/master/test.c) will help too.
 
 There will be HTML documentation eventually.
 
