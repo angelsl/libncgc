@@ -173,11 +173,13 @@ static int32_t send_command(const ncgc_nplatform_data_t pdata, const uint64_t cm
     return ctr;
 }
 
-const ncgc_nplatform_t ncgc_nplatform_ctr = {
-    .data = { .int_data = 0 },
-    .reset = reset,
-    .send_command = send_command,
-    .io_delay = io_delay,
-    .seed_key2 = seed_key2,
-    .hw_key2 = true
-};
+void ncgc_nplatform_ctr_init(ncgc_ncard_t *card) {
+    card->platform = (ncgc_nplatform_t) {
+        .data = { .int_data = 0 },
+        .reset = reset,
+        .send_command = send_command,
+        .io_delay = io_delay,
+        .seed_key2 = seed_key2,
+        .hw_key2 = true
+    };
+}

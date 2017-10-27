@@ -24,6 +24,6 @@
 
 void ncgc_nplatform_ctr_wait_for_card(void);
 bool ncgc_nplatform_ctr_card_inserted(void);
-extern const ncgc_nplatform_t ncgc_nplatform_ctr;
+void ncgc_nplatform_ctr_init(ncgc_ncard_t *card);
 
 #endif /* NCGC_PLATFORM_CTR_NTR_H */
