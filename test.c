@@ -71,7 +71,7 @@ struct op ops[] = {
         .op_type = RESET
     }, { /* cur_op = 1 */
         .op_type = COMMAND,
-        .command = { .cmd = 0x9F, .size = 0x2000, .flags = 0x8000000 }
+        .command = { .cmd = 0x9F, .size = 0x2000, .flags = 0x8180000 }
     }, { /* cur_op = 2 */
         .op_type = DELAY,
         .delay = 0x40000
@@ -80,7 +80,7 @@ struct op ops[] = {
         .command = { .cmd = 0x90, .size = 0x4, .flags = 0x8000000 }
     }, { /* cur_op = 4 */
         .op_type = COMMAND,
-        .command = { .cmd = 0x00, .size = 0x1000, .flags = 0x8000000 }
+        .command = { .cmd = 0x00, .size = 0x1000, .flags = 0x83F1FFF }
     }, { /* cur_op = 5 */
         .op_type = COMMAND,
         .command = { .cmd = 0x00469D0373A4113C, .size = 0x0, .flags = 0x10657 }
