@@ -15,12 +15,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../include/ncgc/platform/ctr_ntr.h"
+#include "../../include/ncgc/platform/ctr_ntr.h"
 
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "../include/ncgc/ntrcard.h"
+#include "../../include/ncgc/ntrcard.h"
 
 #define REG_CARDCONF            (*(volatile uint16_t *)0x1000000C)
 #define REG_CARDCONF2           (*(volatile uint8_t *)0x10000010)
