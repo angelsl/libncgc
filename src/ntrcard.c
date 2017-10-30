@@ -55,7 +55,7 @@
 #define PDATA(card)             ((card)->platform.data)
 #define F(flags)                ((ncgc_nflags_t) { (flags) })
 
-static uint64_t key1_construct(ncgc_ncard_t* card, const uint8_t cmdarg, const uint16_t arg, const uint32_t ij) {
+static uint64_t key1_construct(ncgc_ncard_t *const card, const uint8_t cmdarg, const uint16_t arg, const uint32_t ij) {
     // C = cmd, A = arg
     // KK KK JK JJ II AI AA CA
     const uint32_t k = card->key1.k++;
@@ -69,13 +69,13 @@ static uint64_t key1_construct(ncgc_ncard_t* card, const uint8_t cmdarg, const u
     return BSWAP64(cmd);
 }
 
-static int32_t key1_cmd(ncgc_ncard_t* card, const uint8_t cmdarg, const uint16_t arg, const uint32_t ij,
+static int32_t key1_cmd(ncgc_ncard_t *const card, const uint8_t cmdarg, const uint16_t arg, const uint32_t ij,
     const uint32_t read_size, void *const dest, const uint32_t flags) {
     uint64_t cmd = key1_construct(card, cmdarg, arg, ij);
     return P(card).send_command(card, cmd, read_size, dest, read_size, F(flags));
 }
 
-static int32_t read_header(ncgc_ncard_t* card, void *const buf) {
+static int32_t read_header(ncgc_ncard_t *const card, void *const buf) {
     char ourbuf[0x68] = {0};
     char *usedbuf = buf ? buf : ourbuf;
 
@@ -129,7 +129,7 @@ int32_t ncgc_ninit(ncgc_ncard_t *const card, void *const buf) {
     return 0;
 }
 
-void ncgc_nsetup_blowfish(ncgc_ncard_t* card, uint32_t ps[NCGC_NBF_PS_N32]) {
+void ncgc_nsetup_blowfish(ncgc_ncard_t *const card, uint32_t ps[NCGC_NBF_PS_N32]) {
     card->key1.key[0] = card->hdr.game_code;
     card->key1.key[1] = card->hdr.game_code >> 1;
     card->key1.key[2] = card->hdr.game_code << 1;
@@ -140,7 +140,7 @@ void ncgc_nsetup_blowfish(ncgc_ncard_t* card, uint32_t ps[NCGC_NBF_PS_N32]) {
     ncgc_nbf_apply_key(card->key1.ps, card->key1.key);
 }
 
-int32_t ncgc_nbegin_key1(ncgc_ncard_t* card) {
+int32_t ncgc_nbegin_key1(ncgc_ncard_t *const card) {
     int32_t r;
     card->key2.mn = 0xC99ACE;
     card->key1.ij = 0x11A473;
@@ -177,7 +177,7 @@ int32_t ncgc_nbegin_key1(ncgc_ncard_t* card) {
     return 0;
 }
 
-int32_t ncgc_nread_secure_area(ncgc_ncard_t* card, void *const dest) {
+int32_t ncgc_nread_secure_area(ncgc_ncard_t *const card, void *const dest) {
     int32_t r;
     if (card->encryption_state != NCGC_NKEY1) {
         return -1;
@@ -198,7 +198,7 @@ int32_t ncgc_nread_secure_area(ncgc_ncard_t* card, void *const dest) {
     return 0;
 }
 
-int32_t ncgc_nbegin_key2(ncgc_ncard_t* card) {
+int32_t ncgc_nbegin_key2(ncgc_ncard_t *const card) {
     int32_t r;
     if ((r = key1_cmd(card, CMD_KEY1_ACTIVATE_KEY2, card->key1.l, card->key1.ij, 0, NULL, card->key1.romcnt)) < 0) {
         return -r+100;
