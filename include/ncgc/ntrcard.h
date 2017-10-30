@@ -22,6 +22,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <string.h>
 
 #include "blowfish.h"
 
@@ -160,6 +161,11 @@ int32_t ncgc_ninit(ncgc_ncard_t *const card, void *const buf);
 
 /// Sets up the blowfish state based on the game code in the header, and the provided initial P array/S boxes.
 void ncgc_nsetup_blowfish(ncgc_ncard_t* card, uint32_t ps[NCGC_NBF_PS_N32]);
+
+/// Sets up the blowfish state with the provided initial P array/S boxes.
+inline void ncgc_nsetup_blowfish_as_is(ncgc_ncard_t* card, uint32_t ps[NCGC_NBF_PS_N32]) {
+    memcpy(card->key1.ps, ps, sizeof(card->key1.ps));
+}
 
 /// Brings the card into KEY1 mode. Returns 0 on success, or -1 if the KEY1 CHIPID command result does not match
 /// the chip ID stored in `card`.
