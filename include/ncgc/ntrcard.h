@@ -37,6 +37,7 @@ typedef struct ncgc_nflags {
 typedef union {
     uint64_t int_data;
     void *ptr_data;
+    void (*fn_data)();
 } ncgc_nplatform_data_t;
 
 struct ncgc_ncard;
