@@ -37,12 +37,14 @@ typedef union {
     void *ptr_data;
 } ncgc_nplatform_data_t;
 
+struct ncgc_ncard;
+
 typedef struct ncgc_nplatform {
     ncgc_nplatform_data_t data;
-    int32_t (*reset)(ncgc_nplatform_data_t data);
-    int32_t (*send_command)(ncgc_nplatform_data_t data, uint64_t cmd, uint32_t read_size, void *dest, uint32_t dest_size, ncgc_nflags_t flags);
+    int32_t (*reset)(struct ncgc_ncard *card);
+    int32_t (*send_command)(struct ncgc_ncard *card, uint64_t cmd, uint32_t read_size, void *dest, uint32_t dest_size, ncgc_nflags_t flags);
     void (*io_delay)(uint32_t delay);
-    void (*seed_key2)(ncgc_nplatform_data_t data, uint64_t x, uint64_t y);
+    void (*seed_key2)(struct ncgc_ncard *card, uint64_t x, uint64_t y);
 
     bool hw_key2;
 } ncgc_nplatform_t;

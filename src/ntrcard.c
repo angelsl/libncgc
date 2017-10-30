@@ -72,14 +72,14 @@ static uint64_t key1_construct(ncgc_ncard_t* card, const uint8_t cmdarg, const u
 static int32_t key1_cmd(ncgc_ncard_t* card, const uint8_t cmdarg, const uint16_t arg, const uint32_t ij,
     const uint32_t read_size, void *const dest, const uint32_t flags) {
     uint64_t cmd = key1_construct(card, cmdarg, arg, ij);
-    return P(card).send_command(PDATA(card), cmd, read_size, dest, read_size, F(flags));
+    return P(card).send_command(card, cmd, read_size, dest, read_size, F(flags));
 }
 
 static int32_t read_header(ncgc_ncard_t* card, void *const buf) {
     char ourbuf[0x68] = {0};
     char *usedbuf = buf ? buf : ourbuf;
 
-    int32_t r = P(card).send_command(PDATA(card),
+    int32_t r = P(card).send_command(card,
         CMD_RAW_HEADER_READ, 0x1000, usedbuf, buf ? 0x1000 : sizeof(ourbuf),
         F(FLAGS_CLK_SLOW | FLAGS_DELAY1(0x1FFF) | FLAGS_DELAY2(0x3F)));
     if (r < 0) {
@@ -99,13 +99,13 @@ static void seed_key2(ncgc_ncard_t *const card) {
     card->key2.y = 0x5C879B9B05ull;
 
     if (P(card).hw_key2) {
-        P(card).seed_key2(PDATA(card), card->key2.x, card->key2.y);
+        P(card).seed_key2(card, card->key2.x, card->key2.y);
     }
 }
 
 int32_t ncgc_ninit(ncgc_ncard_t *const card, void *const buf) {
     int32_t r;
-    if ((r = P(card).reset(PDATA(card)))) {
+    if ((r = P(card).reset(card))) {
         return r;
     }
 
@@ -113,13 +113,13 @@ int32_t ncgc_ninit(ncgc_ncard_t *const card, void *const buf) {
         return -1;
     }
 
-    if ((r = P(card).send_command(PDATA(card), CMD_RAW_DUMMY, 0x2000, NULL, 0, F(FLAGS_CLK_SLOW | FLAGS_DELAY2(0x18)))) < 0) {
+    if ((r = P(card).send_command(card, CMD_RAW_DUMMY, 0x2000, NULL, 0, F(FLAGS_CLK_SLOW | FLAGS_DELAY2(0x18)))) < 0) {
         return -r+100;
     }
 
     P(card).io_delay(0x40000);
     
-    if ((r = P(card).send_command(PDATA(card), CMD_RAW_CHIPID, 4, &card->raw_chipid, 4, F(FLAGS_CLK_SLOW))) < 0) {
+    if ((r = P(card).send_command(card, CMD_RAW_CHIPID, 4, &card->raw_chipid, 4, F(FLAGS_CLK_SLOW))) < 0) {
         return -r+200;
     }
 
@@ -148,7 +148,7 @@ int32_t ncgc_nbegin_key1(ncgc_ncard_t* card) {
     card->key1.l = 0;
 
     // 00 KK KK 0K JJ IJ II 3C
-    if ((r = P(card).send_command(PDATA(card),
+    if ((r = P(card).send_command(card,
         CMD_RAW_ACTIVATE_KEY1 |
             ((card->key1.ij & 0xFF0000ull) >> 8) | ((card->key1.ij & 0xFF00ull) << 8) | ((card->key1.ij & 0xFFull) << 24) |
             ((card->key1.k & 0xF0000ull) << 16) | ((card->key1.k & 0xFF00ull) << 32) | ((card->key1.k & 0xFFull) << 48),
@@ -196,7 +196,7 @@ int32_t ncgc_nbegin_key2(ncgc_ncard_t* card) {
     }
     card->key2.romcnt = card->hdr.key2_romcnt & (FLAGS_CLK_SLOW | FLAGS_SEC_CMD | FLAGS_DELAY2_MASK | FLAGS_SEC_EN | FLAGS_SEC_DAT | FLAGS_DELAY1_MASK);
 
-    if ((r = P(card).send_command(PDATA(card),
+    if ((r = P(card).send_command(card,
         CMD_KEY2_CHIPID, 4, &card->key2.chipid, 4, F(card->key2.romcnt))) < 0) {
         return -r+200;
     }

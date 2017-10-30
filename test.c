@@ -155,9 +155,9 @@ static struct op *next_op(enum op_type op_type) {
     }
 }
 
-static int32_t send_command(const ncgc_nplatform_data_t pdata, const uint64_t cmd, const uint32_t read_size,
+static int32_t send_command(ncgc_ncard_t *const card, const uint64_t cmd, const uint32_t read_size,
         void *const dest, const uint32_t dest_size, const ncgc_nflags_t flags) {
-    (void)pdata; (void)dest; (void)dest_size;
+    (void)card; (void)dest; (void)dest_size;
     #ifdef PRINT
     printf(
         "{ /* cur_op = %llu */\n"
@@ -210,8 +210,8 @@ static void io_delay(uint32_t delay) {
     }
 }
 
-static void seed_key2(ncgc_nplatform_data_t pdata, uint64_t x, uint64_t y) {
-    (void)pdata;
+static void seed_key2(ncgc_ncard_t *const card, uint64_t x, uint64_t y) {
+    (void)card;
     #ifdef PRINT
     printf(
         "{ /* cur_op = %llu */\n"
@@ -236,8 +236,7 @@ static void seed_key2(ncgc_nplatform_data_t pdata, uint64_t x, uint64_t y) {
     }
 }
 
-static int32_t reset(ncgc_nplatform_data_t pdata) {
-    (void)pdata;
+static int32_t reset(ncgc_ncard_t *const card) {
     #ifdef PRINT
     printf(
         "{ /* cur_op = %llu */\n"
@@ -247,6 +246,7 @@ static int32_t reset(ncgc_nplatform_data_t pdata) {
     );
     #endif
 
+    card->encryption_state = NCGC_NRAW;
     next_op(RESET);
     return 0;
 }

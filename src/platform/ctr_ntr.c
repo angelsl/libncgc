@@ -83,8 +83,8 @@ static void io_delay(uint32_t delay) {
     );
 }
 
-static void seed_key2(ncgc_nplatform_data_t pdata, uint64_t x, uint64_t y) {
-    (void)pdata;
+static void seed_key2(ncgc_ncard_t *const card, uint64_t x, uint64_t y) {
+    (void)card;
 
     REG_ROMCNT = 0;
     REG_SEEDX_L = (uint32_t) (x & 0xFFFFFFFF);
@@ -94,9 +94,7 @@ static void seed_key2(ncgc_nplatform_data_t pdata, uint64_t x, uint64_t y) {
     REG_ROMCNT = ROMCNT_NRESET | ROMCNT_SEC_SEED | ROMCNT_SEC_EN | ROMCNT_SEC_DAT;
 }
 
-static int32_t reset(ncgc_nplatform_data_t pdata) {
-    (void)pdata;
-
+static int32_t reset(ncgc_ncard_t *const card) {
     if (REG_CARDCONF2 & 0x1) {
         return -1;
     }
@@ -131,12 +129,13 @@ static int32_t reset(ncgc_nplatform_data_t pdata) {
     REG_ROMCNT = ROMCNT_NRESET | ROMCNT_SEC_SEED;
     while (REG_ROMCNT & ROMCNT_BUSY);
 
+    card->encryption_state = NCGC_NRAW;
     return 0;
 }
 
-static int32_t send_command(const ncgc_nplatform_data_t pdata, const uint64_t cmd, const uint32_t read_size,
+static int32_t send_command(ncgc_ncard_t *const card, const uint64_t cmd, const uint32_t read_size,
         void *const dest, const uint32_t dest_size, const ncgc_nflags_t flags) {
-    (void)pdata;
+    (void)card;
 
     uint32_t blksizeflag;
     switch (read_size) {
