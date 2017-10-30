@@ -18,6 +18,7 @@
 #include <string.h>
 #include <stdint.h>
 
+#include "../include/ncgc/compiler.h"
 #include "../include/ncgc/ntrcard.h"
 #include "../include/ncgc/blowfish.h"
 
@@ -68,13 +69,13 @@ static uint64_t key1_construct(ncgc_ncard_t *const card, const uint8_t cmdarg, c
     return BSWAP64(cmd);
 }
 
-static int32_t key1_cmd(ncgc_ncard_t *const card, const uint8_t cmdarg, const uint16_t arg, const uint32_t ij,
+static __must_check int32_t key1_cmd(ncgc_ncard_t *const card, const uint8_t cmdarg, const uint16_t arg, const uint32_t ij,
     const uint32_t read_size, void *const dest, const uint32_t flags) {
     uint64_t cmd = key1_construct(card, cmdarg, arg, ij);
     return P(card).send_command(card, cmd, read_size, dest, read_size, F(flags));
 }
 
-static int32_t read_header(ncgc_ncard_t *const card, void *const buf) {
+static __must_check int32_t read_header(ncgc_ncard_t *const card, void *const buf) {
     char ourbuf[0x68] = {0};
     char *usedbuf = buf ? buf : ourbuf;
 
@@ -224,7 +225,7 @@ int32_t ncgc_nbegin_key2(ncgc_ncard_t *const card) {
     return 0;
 }
 
-static int32_t key2_read(ncgc_ncard_t *const card, uint32_t address, char buf[0x200]) {
+static __must_check int32_t key2_read(ncgc_ncard_t *const card, uint32_t address, char buf[0x200]) {
     return P(card).send_command(card, 0xB7 | (((uint64_t) BSWAP32(address)) << 8), 0x200, buf, 0x200, F(card->key2.romcnt));
 }
 
