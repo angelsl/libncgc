@@ -118,7 +118,7 @@ int32_t ncgc_ninit(ncgc_ncard_t *const card, void *const buf) {
     }
 
     P(card).io_delay(0x40000);
-    
+
     if ((r = P(card).send_command(card, CMD_RAW_CHIPID, 4, &card->raw_chipid, 4, F(FLAGS_CLK_SLOW))) < 0) {
         return -r+200;
     }
@@ -177,16 +177,25 @@ int32_t ncgc_nbegin_key1(ncgc_ncard_t* card) {
     return 0;
 }
 
-void ncgc_nread_secure_area(ncgc_ncard_t* card, void *const dest) {
+int32_t ncgc_nread_secure_area(ncgc_ncard_t* card, void *const dest) {
+    int32_t r;
+    if (card->encryption_state != NCGC_NKEY1) {
+        return -1;
+    }
+
     uint32_t secure_area_romcnt = (card->hdr.key1_romcnt & (FLAGS_CLK_SLOW | FLAGS_DELAY1_MASK | FLAGS_DELAY2_MASK)) |
         FLAGS_SEC_EN | FLAGS_SEC_DAT | FLAGS_DELAY_PULSE_CLK;
     char *const dest8 = dest;
     for (uint16_t c = 4; c < 8; ++c) {
         // TODO handle chipid high-bit set
-        key1_cmd(card,
+        if ((r = key1_cmd(card,
             CMD_KEY1_SECURE_READ, c, card->key1.ij, 0x1000,
-            dest8 + (c - 4) * 0x1000, secure_area_romcnt);
+            dest8 + (c - 4) * 0x1000, secure_area_romcnt)) < 0) {
+            return -r+100;
+        }
     }
+
+    return 0;
 }
 
 int32_t ncgc_nbegin_key2(ncgc_ncard_t* card) {

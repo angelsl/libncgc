@@ -166,7 +166,7 @@ void ncgc_nsetup_blowfish(ncgc_ncard_t* card, uint32_t ps[NCGC_NBF_PS_N32]);
 int32_t ncgc_nbegin_key1(ncgc_ncard_t* card);
 
 /// Reads the secure area. `dest` must be at least 0x4000 bytes.
-void ncgc_nread_secure_area(ncgc_ncard_t* card, void *const dest);
+int32_t ncgc_nread_secure_area(ncgc_ncard_t* card, void *const dest);
 
 /// Brings the card into KEY2 mode. Returns 0 on success, or -1 if the KEY2 CHIPID command result does not match
 /// the chip ID stored in `card`.
