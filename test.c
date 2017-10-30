@@ -26,6 +26,7 @@
 #include <inttypes.h>
 
 #include "include/ncgc/ntrcard.h"
+#include "src/ncgcutil.h"
 
 extern const char _binary_ntr_blowfish_bin_start;
 
@@ -71,36 +72,35 @@ struct op ops[] = {
         .op_type = RESET
     }, { /* cur_op = 1 */
         .op_type = COMMAND,
-        .command = { .cmd = 0x9F, .size = 0x2000, .flags = 0x8180000 }
+        .command = { .cmd = 0x9F00000000000000ull, .size = 0x2000, .flags = 0x8180000 }
     }, { /* cur_op = 2 */
         .op_type = DELAY,
         .delay = 0x40000
     }, { /* cur_op = 3 */
         .op_type = COMMAND,
-        .command = { .cmd = 0x90, .size = 0x4, .flags = 0x8000000 }
+        .command = { .cmd = 0x9000000000000000ull, .size = 0x4, .flags = 0x8000000 }
     }, { /* cur_op = 4 */
         .op_type = COMMAND,
-        .command = { .cmd = 0x00, .size = 0x1000, .flags = 0x83F1FFF }
+        .command = { .cmd = 0x0000000000000000ull, .size = 0x1000, .flags = 0x83F1FFF }
     }, { /* cur_op = 5 */
         .op_type = COMMAND,
-        .command = { .cmd = 0x00469D0373A4113C, .size = 0x0, .flags = 0x10657 }
+        .command = { .cmd = 0x3C11A473039D4600ull, .size = 0x0, .flags = 0x10657 }
     }, { /* cur_op = 6 */
         .op_type = COMMAND,
-        .command = { .cmd = 0x9F94AF773B6FF707, .size = 0x0, .flags = 0x18000910 }
+        .command = { .cmd = 0x07F76F3B77AF949Full, .size = 0x0, .flags = 0x18000910 }
     }, { /* cur_op = 7 */
         .op_type = SEED_KEY2,
         .seed = { .x = 0x64CD6760E8, .y = 0x5C879B9B05 }
     }, { /* cur_op = 8 */
         .op_type = COMMAND,
-        .command = { .cmd = 0xFE1F2CF157E16CF6, .size = 0x4, .flags = 0x18006910 }
+        .command = { .cmd = 0xF66CE157F12C1FFEull, .size = 0x4, .flags = 0x18006910 }
     }, { /* cur_op = 9 */
         .op_type = COMMAND,
-        .command = { .cmd = 0xA5681E1A5F6122B3, .size = 0x0, .flags = 0x18006910 }
+        .command = { .cmd = 0xB322615F1A1E68A5ull, .size = 0x0, .flags = 0x18006910 }
     }, { /* cur_op = 10 */
         .op_type = COMMAND,
-        .command = { .cmd = 0xB8, .size = 0x4, .flags = 0x416657 }
+        .command = { .cmd = 0xB800000000000000ull, .size = 0x4, .flags = 0x416657 }
     },
-
 };
 const size_t n_ops = sizeof(ops)/sizeof(struct op);
 
@@ -155,9 +155,10 @@ static struct op *next_op(enum op_type op_type) {
     }
 }
 
-static int32_t send_command(ncgc_ncard_t *const card, const uint64_t cmd, const uint32_t read_size,
+static int32_t send_command(ncgc_ncard_t *const card, const uint64_t cmdle, const uint32_t read_size,
         void *const dest, const uint32_t dest_size, const ncgc_nflags_t flags) {
     (void)card; (void)dest; (void)dest_size;
+    const uint64_t cmd = BSWAP64(cmdle);
     #ifdef PRINT
     printf(
         "{ /* cur_op = %llu */\n"
