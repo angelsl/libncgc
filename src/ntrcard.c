@@ -215,3 +215,46 @@ int32_t ncgc_nbegin_key2(ncgc_ncard_t *const card) {
     card->encryption_state = NCGC_NKEY2;
     return 0;
 }
+
+static int32_t key2_read(ncgc_ncard_t *const card, uint32_t address, char buf[0x200]) {
+    return P(card).send_command(card, 0xB7 | (((uint64_t) BSWAP32(address)) << 8), 0x200, buf, 0x200, F(card->key2.romcnt));
+}
+
+int32_t ncgc_nread_data(ncgc_ncard_t *const card, const uint32_t address, void *const buf, const size_t size) {
+    size_t size_left = size;
+    uint32_t cur_addr = (address & ~0x1FF);
+    char *cur_buf = buf;
+    int32_t r;
+
+    if (cur_addr < address) {
+        size_t bytes_completed = NMIN(size, 0x200 - (address - cur_addr));
+        char buf[0x200];
+        if ((r = key2_read(card, cur_addr, buf)) < 0) {
+            return -r+100;
+        }
+
+        memcpy(cur_buf, buf + (address - cur_addr), bytes_completed);
+        size_left -= bytes_completed;
+        cur_buf += bytes_completed;
+        cur_addr += 0x200;
+    }
+
+    while (size_left >= 0x200) {
+        if ((r = key2_read(card, cur_addr, cur_buf)) < 0) {
+            return -r+200;
+        }
+        size_left -= 0x200;
+        cur_buf += 0x200;
+        cur_addr += 0x200;
+    }
+
+    if (size_left > 0) {
+        char buf[0x200];
+        if ((r = key2_read(card, cur_addr, buf)) < 0) {
+            return -r+300;
+        }
+        memcpy(cur_buf, buf, size_left);
+    }
+
+    return 0;
+}

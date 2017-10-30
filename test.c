@@ -100,7 +100,19 @@ struct op ops[] = {
     }, { /* cur_op = 10 */
         .op_type = COMMAND,
         .command = { .cmd = 0xB800000000000000ull, .size = 0x4, .flags = 0x416657 }
-    },
+    }, { /* cur_op = 11 */
+        .op_type = COMMAND,
+        .command = { .cmd = 0xB700000000000000ull, .size = 0x200, .flags = 0x416657 }
+    }, { /* cur_op = 12 */
+        .op_type = COMMAND,
+        .command = { .cmd = 0xB700000200000000ull, .size = 0x200, .flags = 0x416657 }
+    }, { /* cur_op = 13 */
+        .op_type = COMMAND,
+        .command = { .cmd = 0xB700000400000000ull, .size = 0x200, .flags = 0x416657 }
+    }, { /* cur_op = 14 */
+        .op_type = COMMAND,
+        .command = { .cmd = 0xB700000600000000ull, .size = 0x200, .flags = 0x416657 }
+    }
 };
 const size_t n_ops = sizeof(ops)/sizeof(struct op);
 
@@ -121,6 +133,10 @@ static void write_response(size_t op_no, void *const dest, const uint32_t dest_s
             fprintf(stderr, "FAIL: COMMAND (%llu) no response\n", op_no);
             break;
         case 1:
+        case 11:
+        case 12:
+        case 13:
+        case 14:
             break;
         case 3:
         case 8:
@@ -277,6 +293,11 @@ int main() {
 
     if ((r = ncgc_nbegin_key2(&card))) {
         fprintf(stderr, "FAIL: ncgc_nbegin_key2 = %d\n", r);
+    }
+
+    char buf[1642];
+    if ((r = ncgc_nread_data(&card, 117, buf, sizeof(buf)))) {
+        fprintf(stderr, "FAIL: ncgc_nread_data = %d\n", r);
     }
     #ifdef PRINT
     puts("");

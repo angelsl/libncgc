@@ -177,4 +177,6 @@ int32_t ncgc_nread_secure_area(ncgc_ncard_t* card, void *const dest);
 /// Brings the card into KEY2 mode. Returns 0 on success, or -1 if the KEY2 CHIPID command result does not match
 /// the chip ID stored in `card`.
 int32_t ncgc_nbegin_key2(ncgc_ncard_t* card);
+
+int32_t ncgc_nread_data(ncgc_ncard_t *const card, const uint32_t address, void *const buf, const size_t size);
 #endif /* NCGC_NTRCARD_H */
