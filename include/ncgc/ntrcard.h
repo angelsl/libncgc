@@ -108,8 +108,8 @@ typedef struct ncgc_ncard {
 inline uint16_t ncgc_nflags_predelay(const ncgc_nflags_t flags) { return (uint16_t) (flags.flags & 0x1FFF); }
 /// Returns the delay after the response to a KEY1 command (KEY1 gap2)
 inline uint16_t ncgc_nflags_postdelay(const ncgc_nflags_t flags) { return (uint16_t) ((flags.flags >> 16) & 0x3F); }
-/// Returns true if the secure area can be read 0x1000 bytes at a time
-inline bool ncgc_nflags_large_secure_area_read(const ncgc_nflags_t flags) { return !!(flags.flags & (1 << 28)); }
+/// Returns true if clock pulses should be sent, and the KEY2 state advanced, during the pre- and post(?)-delays
+inline bool ncgc_nflags_delay_pulse_clock(const ncgc_nflags_t flags) { return !!(flags.flags & (1 << 28)); }
 /// Returns true if the command is KEY2-encrypted
 inline bool ncgc_nflags_key2_command(const ncgc_nflags_t flags) { return (!!(flags.flags & (1 << 22))) && (!!(flags.flags & (1 << 14))); }
 /// Returns true if the response is KEY2-encrypted
@@ -121,8 +121,8 @@ inline bool ncgc_nflags_slow_clock(const ncgc_nflags_t flags) { return (!!(flags
 inline void ncgc_nflags_set_predelay(ncgc_nflags_t *const flags, const uint16_t predelay) { flags->flags = (flags->flags & 0xFFFFE000) | (predelay & 0x1FFF); }
 /// Sets the delay after the response to a KEY1 command (KEY1 gap2)
 inline void ncgc_nflags_set_postdelay(ncgc_nflags_t *const flags, const uint16_t postdelay) { flags->flags = (flags->flags & 0xFFC0FFFF) | ((postdelay & 0x3F) << 16); }
-/// Set if the secure area can be read 0x1000 bytes at a time
-inline void ncgc_nflags_set_large_secure_area_read(ncgc_nflags_t *const flags, const bool set) { flags->flags = (flags->flags & ~(1 << 28)) | (set ? (1 << 28) : 0); }
+/// Set if clock pulses should be sent, and the KEY2 state advanced, during the pre- and post(?)-delays
+inline void ncgc_nflags_set_delay_pulse_clock(ncgc_nflags_t *const flags, const bool set) { flags->flags = (flags->flags & ~(1 << 28)) | (set ? (1 << 28) : 0); }
 /// Set if the command is KEY2-encrypted
 inline void ncgc_nflags_set_key2_command(ncgc_nflags_t *const flags, const bool set) {
     flags->flags = (flags->flags & ~((1 << 22) | (1 << 14))) |
@@ -139,14 +139,14 @@ inline void ncgc_nflags_set_slow_clock(ncgc_nflags_t *const flags, const bool se
 /// Constructs a `ncgc_nflags_t`.
 inline ncgc_nflags_t ncgc_nflags_construct(const uint16_t predelay,
                                            const uint16_t postdelay,
-                                           const bool large_secure_area_read,
+                                           const bool delay_pulse_clock,
                                            const bool key2_command,
                                            const bool key2_data,
                                            const bool slow_clock) {
     ncgc_nflags_t flags;
     ncgc_nflags_set_predelay(&flags, predelay);
     ncgc_nflags_set_postdelay(&flags, postdelay);
-    ncgc_nflags_set_large_secure_area_read(&flags, large_secure_area_read);
+    ncgc_nflags_set_delay_pulse_clock(&flags, delay_pulse_clock);
     ncgc_nflags_set_key2_command(&flags, key2_command);
     ncgc_nflags_set_key2_data(&flags, key2_data);
     ncgc_nflags_set_slow_clock(&flags, slow_clock);

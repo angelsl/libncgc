@@ -22,7 +22,7 @@
 #include "../include/ncgc/blowfish.h"
 
 #define FLAGS_WR               (1u << 30)
-#define FLAGS_SEC_LARGE        (1u << 28)              // Use "other" secure area mode, which tranfers blocks of 0x1000 bytes at a time
+#define FLAGS_DELAY_PULSE_CLK  (1u << 28)              // Pulse clock during pre- and post(?)-delays
 #define FLAGS_CLK_SLOW         (1u << 27)              // Transfer clock rate (0 = 6.7MHz, 1 = 4.2MHz)
 #define FLAGS_SEC_CMD          (1u << 22)              // The command transfer will be hardware encrypted (KEY2)
 #define FLAGS_DELAY2(n)        (((n) & 0x3Fu) << 16)   // Transfer delay length part 2
@@ -158,7 +158,7 @@ int32_t ncgc_nbegin_key1(ncgc_ncard_t* card) {
 
     card->key1.romcnt = (card->key2.romcnt & (FLAGS_WR | FLAGS_CLK_SLOW)) |
         ((card->hdr.key1_romcnt & (FLAGS_CLK_SLOW | FLAGS_DELAY1_MASK)) +
-        ((card->hdr.key1_romcnt & FLAGS_DELAY2_MASK) >> 16)) | FLAGS_SEC_LARGE;
+        ((card->hdr.key1_romcnt & FLAGS_DELAY2_MASK) >> 16)) | FLAGS_DELAY_PULSE_CLK;
     if ((r = key1_cmd(card, CMD_KEY1_INIT_KEY2, card->key1.l, card->key2.mn, 0, NULL, card->key1.romcnt)) < 0) {
         return -r+200;
     }
@@ -179,7 +179,7 @@ int32_t ncgc_nbegin_key1(ncgc_ncard_t* card) {
 
 void ncgc_nread_secure_area(ncgc_ncard_t* card, void *const dest) {
     uint32_t secure_area_romcnt = (card->hdr.key1_romcnt & (FLAGS_CLK_SLOW | FLAGS_DELAY1_MASK | FLAGS_DELAY2_MASK)) |
-        FLAGS_SEC_EN | FLAGS_SEC_DAT | FLAGS_SEC_LARGE;
+        FLAGS_SEC_EN | FLAGS_SEC_DAT | FLAGS_DELAY_PULSE_CLK;
     char *const dest8 = dest;
     for (uint16_t c = 4; c < 8; ++c) {
         // TODO handle chipid high-bit set
