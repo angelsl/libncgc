@@ -105,7 +105,7 @@ static void seed_key2(ncgc_ncard_t *const card) {
 int32_t ncgc_ninit(ncgc_ncard_t *const card, void *const buf) {
     int32_t r;
     if ((r = P(card).reset(card))) {
-        return r;
+        return -r+100;
     }
 
     if (card->encryption_state != NCGC_NRAW) {
@@ -113,17 +113,17 @@ int32_t ncgc_ninit(ncgc_ncard_t *const card, void *const buf) {
     }
 
     if ((r = P(card).send_command(card, CMD_RAW_DUMMY, 0x2000, NULL, 0, F(FLAGS_CLK_SLOW | FLAGS_DELAY2(0x18)))) < 0) {
-        return -r+100;
+        return -r+200;
     }
 
     P(card).io_delay(0x40000);
 
     if ((r = P(card).send_command(card, CMD_RAW_CHIPID, 4, &card->raw_chipid, 4, F(FLAGS_CLK_SLOW))) < 0) {
-        return -r+200;
+        return -r+300;
     }
 
     if ((r = read_header(card, buf)) < 0) {
-        return -r+300;
+        return -r+400;
     }
     return 0;
 }

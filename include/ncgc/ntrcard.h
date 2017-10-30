@@ -42,11 +42,29 @@ struct ncgc_ncard;
 
 typedef struct ncgc_nplatform {
     ncgc_nplatform_data_t data;
+
+    /// Platform reset. Called by ncgc_ninit.
+    ///
+    /// `card->encryption_state` is set to `NCGC_NRAW` upon success.
+    ///
+    /// Returns 0 on success, or a platform-dependent error code between -1 and -99 on failure.
     int32_t (*reset)(struct ncgc_ncard *card);
+
+    /// Sends a command and reads the response.
+    ///
+    /// Returns the number of bytes read from the card on success, or a platform-dependent error code between -1 and -99
+    /// on failure.
     int32_t (*send_command)(struct ncgc_ncard *card, uint64_t cmd, uint32_t read_size, void *dest, uint32_t dest_size, ncgc_nflags_t flags);
+
     void (*io_delay)(uint32_t delay);
+
+    /// Sets the KEY2 registers.
+    ///
+    /// This function will not be called if `hw_key2` is false.
     void (*seed_key2)(struct ncgc_ncard *card, uint64_t x, uint64_t y);
 
+    /// True if the platform has hardware KEY2 support. In that case, in KEY2 mode, commands are passed to `send_command`
+    /// in plaintext. The platform should do the necessary encryption of the command bytes and decryption of data bytes.
     bool hw_key2;
 } ncgc_nplatform_t;
 
@@ -155,8 +173,13 @@ inline ncgc_nflags_t ncgc_nflags_construct(const uint16_t predelay,
 }
 
 /// Initialises the card slot and card, optionally reading the header into `buf`, if `buf` is not null.
-/// Returns 0 on success, -1 if no card is inserted, or -2 if initialisation otherwise fails.
 /// If specified, `buf` should be at least 0x1000 bytes.
+///
+/// The card encryption state must be RAW when this function is called.
+///
+/// Returns 0 on success, -1 if the encryption state is not currently RAW, or a positive error code if the platform
+/// reports an error during the card reset or while sending commands. If `buf` is specified, the card header will be
+/// read into `buf`.
 int32_t ncgc_ninit(ncgc_ncard_t *const card, void *const buf);
 
 /// Sets up the blowfish state based on the game code in the header, and the provided initial P array/S boxes.
@@ -167,16 +190,34 @@ inline void ncgc_nsetup_blowfish_as_is(ncgc_ncard_t* card, uint32_t ps[NCGC_NBF_
     memcpy(card->key1.ps, ps, sizeof(card->key1.ps));
 }
 
-/// Brings the card into KEY1 mode. Returns 0 on success, or -1 if the KEY1 CHIPID command result does not match
-/// the chip ID stored in `card`.
+/// Brings the card into KEY1 mode.
+///
+/// The card encryption state must be RAW when this function is called. The blowfish P array and S boxes need to be
+/// initialised before this function is called, otherwise it will likely fail with error -2.
+///
+/// Returns 0 on success, -1 if the encryption state is not currently RAW, -2 if the KEY1 CHIPID command result does
+/// not match the raw chip ID stored in `card`, or a positive error code if the platform reports an error while sending
+/// commands.
 int32_t ncgc_nbegin_key1(ncgc_ncard_t* card);
 
 /// Reads the secure area. `dest` must be at least 0x4000 bytes.
+///
+/// Returns 0 on success, -1 if the encryption state is not currently KEY1, or a positive error code if the platform
+/// reports an error while sending commands. The secure area will be read into `dest`.
 int32_t ncgc_nread_secure_area(ncgc_ncard_t* card, void *const dest);
 
-/// Brings the card into KEY2 mode. Returns 0 on success, or -1 if the KEY2 CHIPID command result does not match
-/// the chip ID stored in `card`.
+/// Brings the card into KEY2 mode.
+///
+/// The card encryption state must be KEY1 when this function is called.
+///
+/// Returns 0 on success, -1 if the encryption state is not currently KEY1, -2 if the KEY2 CHIPID command result does
+/// not match raw the chip ID stored in `card`, or a positive error code if the platform reports an error while sending
+/// commands.
 int32_t ncgc_nbegin_key2(ncgc_ncard_t* card);
 
+/// Reads the card data using the NTR 0xB7 command.
+///
+/// Returns 0 on success, -1 if the encryption state is not currently KEY2, or a positive error code if the platform
+/// reports an error while sending commands.
 int32_t ncgc_nread_data(ncgc_ncard_t *const card, const uint32_t address, void *const buf, const size_t size);
 #endif /* NCGC_NTRCARD_H */
