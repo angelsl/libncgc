@@ -185,10 +185,10 @@ inline ncgc_nflags_t ncgc_nflags_construct(const uint16_t predelay,
 int32_t __must_check ncgc_ninit(ncgc_ncard_t *const card, void *const buf);
 
 /// Sets up the blowfish state based on the game code in the header, and the provided initial P array/S boxes.
-void ncgc_nsetup_blowfish(ncgc_ncard_t* card, uint32_t ps[NCGC_NBF_PS_N32]);
+void ncgc_nsetup_blowfish(ncgc_ncard_t* card, const uint32_t ps[NCGC_NBF_PS_N32]);
 
 /// Sets up the blowfish state with the provided initial P array/S boxes.
-inline void ncgc_nsetup_blowfish_as_is(ncgc_ncard_t* card, uint32_t ps[NCGC_NBF_PS_N32]) {
+inline void ncgc_nsetup_blowfish_as_is(ncgc_ncard_t* card, const uint32_t ps[NCGC_NBF_PS_N32]) {
     memcpy(card->key1.ps, ps, sizeof(card->key1.ps));
 }
 
