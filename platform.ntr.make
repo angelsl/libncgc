@@ -3,7 +3,7 @@ $(error "Please set DEVKITARM in your environment. export DEVKITARM=<path to>dev
 endif
 include $(DEVKITARM)/base_tools
 
-ARCH		:=	-marm
+ARCH		:=	-marm -mthumb-interwork -masm-syntax-unified
 ARCHFLAGS	:=	-march=armv5te -mtune=arm946e-s \
 				-fomit-frame-pointer -ffunction-sections -fdata-sections -ffast-math \
 				-DARM9
