@@ -140,6 +140,10 @@ void ncgc_nsetup_blowfish(ncgc_ncard_t *const card, uint32_t ps[NCGC_NBF_PS_N32]
 }
 
 int32_t ncgc_nbegin_key1(ncgc_ncard_t *const card) {
+    if (card->encryption_state != NCGC_NRAW) {
+        return -1;
+    }
+
     int32_t r;
     card->key2.mn = 0xC99ACE;
     card->key1.ij = 0x11A473;
@@ -170,7 +174,7 @@ int32_t ncgc_nbegin_key1(ncgc_ncard_t *const card) {
     }
     if (card->raw_chipid != card->key1.chipid) {
         card->encryption_state = NCGC_NUNKNOWN;
-        return -1;
+        return -2;
     }
     card->encryption_state = NCGC_NKEY1;
     return 0;
@@ -198,6 +202,10 @@ int32_t ncgc_nread_secure_area(ncgc_ncard_t *const card, void *const dest) {
 }
 
 int32_t ncgc_nbegin_key2(ncgc_ncard_t *const card) {
+    if (card->encryption_state != NCGC_NKEY1) {
+        return -1;
+    }
+
     int32_t r;
     if ((r = key1_cmd(card, CMD_KEY1_ACTIVATE_KEY2, card->key1.l, card->key1.ij, 0, NULL, card->key1.romcnt)) < 0) {
         return -r+100;
@@ -210,7 +218,7 @@ int32_t ncgc_nbegin_key2(ncgc_ncard_t *const card) {
     }
     if (card->key2.chipid != card->raw_chipid) {
         card->encryption_state = NCGC_NUNKNOWN;
-        return -1;
+        return -2;
     }
     card->encryption_state = NCGC_NKEY2;
     return 0;
@@ -221,6 +229,10 @@ static int32_t key2_read(ncgc_ncard_t *const card, uint32_t address, char buf[0x
 }
 
 int32_t ncgc_nread_data(ncgc_ncard_t *const card, const uint32_t address, void *const buf, const size_t size) {
+    if (card->encryption_state != NCGC_NKEY2) {
+        return -1;
+    }
+
     size_t size_left = size;
     uint32_t cur_addr = (address & ~0x1FF);
     char *cur_buf = buf;
