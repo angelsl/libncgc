@@ -19,7 +19,7 @@
 
 #include <stdint.h>
 
-#define BSWAP32(val) ((((val >> 24) & 0xFF)) | (((val >> 16) & 0xFF) << 8) | (((val >> 8) & 0xFF) << 16) | ((val & 0xFF) << 24))
+#include "ncgcutil.h"
 
 void ncgc_nbf_encrypt(const uint32_t ps[NCGC_NBF_PS_N32], uint32_t lr[2]) {
     uint32_t x = lr[1];

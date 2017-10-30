@@ -21,6 +21,8 @@
 #include "../include/ncgc/ntrcard.h"
 #include "../include/ncgc/blowfish.h"
 
+#include "ncgcutil.h"
+
 #define FLAGS_WR               (1u << 30)
 #define FLAGS_DELAY_PULSE_CLK  (1u << 28)              // Pulse clock during pre- and post(?)-delays
 #define FLAGS_CLK_SLOW         (1u << 27)              // Transfer clock rate (0 = 6.7MHz, 1 = 4.2MHz)
@@ -31,9 +33,6 @@
 #define FLAGS_SEC_DAT          (1u << 13)              // The data transfer will be hardware encrypted (KEY2)
 #define FLAGS_DELAY1(n)        ((n) & 0x1FFFu)         // Transfer delay length part 1
 #define FLAGS_DELAY1_MASK      (FLAGS_DELAY1(0x1FFF))
-
-#define BSWAP64(val) ((((val >> 56) & 0xFF)) | (((val >> 48) & 0xFF) << 8) | (((val >> 40) & 0xFF) << 16) | (((val >> 32) & 0xFF) << 24) | \
-    (((val >> 24) & 0xFF) << 32) | (((val >> 16) & 0xFF) << 40) | (((val >> 8) & 0xFF) << 48) | (((val) & 0xFF) << 56))
 
 #define CMD_RAW_DUMMY           0x9Fu
 #define CMD_RAW_CHIPID          0x90u
