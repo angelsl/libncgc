@@ -174,6 +174,12 @@ inline ncgc_nflags_t ncgc_nflags_construct(const uint16_t predelay,
     return flags;
 }
 
+/// See `ncgc_ninit`.
+///
+/// If header_first is true, the header is read before the chip ID. Otherwise,
+/// the chip ID is read first.
+int32_t __must_check ncgc_ninit_order(ncgc_ncard_t *const card, void *const buf, bool header_first);
+
 /// Initialises the card slot and card, optionally reading the header into `buf`, if `buf` is not null.
 /// If specified, `buf` should be at least 0x1000 bytes.
 ///
@@ -182,7 +188,9 @@ inline ncgc_nflags_t ncgc_nflags_construct(const uint16_t predelay,
 /// Returns 0 on success, -1 if the encryption state is not currently RAW, or a positive error code if the platform
 /// reports an error during the card reset or while sending commands. If `buf` is specified, the card header will be
 /// read into `buf`.
-int32_t __must_check ncgc_ninit(ncgc_ncard_t *const card, void *const buf);
+inline int32_t __must_check ncgc_ninit(ncgc_ncard_t *const card, void *const buf) {
+    return ncgc_ninit_order(card, buf, false);
+}
 
 /// Sets up the blowfish state based on the game code in the header, and the provided initial P array/S boxes.
 void ncgc_nsetup_blowfish(ncgc_ncard_t* card, const uint32_t ps[NCGC_NBF_PS_N32]);

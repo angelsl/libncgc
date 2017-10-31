@@ -75,24 +75,6 @@ static __must_check int32_t key1_cmd(ncgc_ncard_t *const card, const uint8_t cmd
     return P(card).send_command(card, cmd, read_size, dest, read_size, F(flags));
 }
 
-static __must_check int32_t read_header(ncgc_ncard_t *const card, void *const buf) {
-    char ourbuf[0x68] = {0};
-    char *usedbuf = buf ? buf : ourbuf;
-
-    int32_t r = P(card).send_command(card,
-        CMD_RAW_HEADER_READ, 0x1000, usedbuf, buf ? 0x1000 : sizeof(ourbuf),
-        F(FLAGS_CLK_SLOW | FLAGS_DELAY1(0x1FFF) | FLAGS_DELAY2(0x3F)));
-    if (r < 0) {
-        return r;
-    }
-
-    card->hdr.game_code = *(uint32_t *)(usedbuf + 0xC);
-    card->hdr.key1_romcnt = card->key1.romcnt = *(uint32_t *)(usedbuf + 0x64);
-    card->hdr.key2_romcnt = card->key2.romcnt = *(uint32_t *)(usedbuf + 0x60);
-    card->key2.seed_byte = *(uint8_t *)(usedbuf + 0x13);
-    return 0;
-}
-
 static void seed_key2(ncgc_ncard_t *const card) {
     const uint8_t seed_bytes[8] = {0xE8, 0x4D, 0x5A, 0xB1, 0x17, 0x8F, 0x99, 0xD5};
     card->key2.x = seed_bytes[card->key2.seed_byte & 7] + (((uint64_t)(card->key2.mn)) << 15) + 0x6000;
@@ -103,7 +85,7 @@ static void seed_key2(ncgc_ncard_t *const card) {
     }
 }
 
-int32_t ncgc_ninit(ncgc_ncard_t *const card, void *const buf) {
+static __must_check int32_t init_common(ncgc_ncard_t *const card) {
     int32_t r;
     if ((r = P(card).reset(card))) {
         return -r+100;
@@ -117,15 +99,47 @@ int32_t ncgc_ninit(ncgc_ncard_t *const card, void *const buf) {
         return -r+200;
     }
 
-    P(card).io_delay(0x40000);
+    P(card).io_delay(0x40000); // is this too much?
+    return 0;
+}
 
-    if ((r = P(card).send_command(card, CMD_RAW_CHIPID, 4, &card->raw_chipid, 4, F(FLAGS_CLK_SLOW))) < 0) {
+static __must_check int32_t init_chipid(ncgc_ncard_t *const card) {
+    int32_t r;
+    if ((r = P(card).send_command(card, CMD_RAW_CHIPID, 4, &card->raw_chipid, 4, F(FLAGS_CLK_SLOW | FLAGS_DELAY1(0x18)))) < 0) {
         return -r+300;
     }
+    return 0;
+}
 
-    if ((r = read_header(card, buf)) < 0) {
+static __must_check int32_t init_header(ncgc_ncard_t *const card, void *const buf) {
+    char ourbuf[0x68] = {0};
+    char *usedbuf = buf ? buf : ourbuf;
+
+    int32_t r = P(card).send_command(card,
+        CMD_RAW_HEADER_READ, 0x1000, usedbuf, buf ? 0x1000 : sizeof(ourbuf),
+        F(FLAGS_CLK_SLOW | FLAGS_DELAY1(0x657) | FLAGS_DELAY2(0x01)));
+    if (r < 0) {
         return -r+400;
     }
+
+    card->hdr.game_code = *(uint32_t *)(usedbuf + 0xC);
+    card->hdr.key1_romcnt = card->key1.romcnt = *(uint32_t *)(usedbuf + 0x64);
+    card->hdr.key2_romcnt = card->key2.romcnt = *(uint32_t *)(usedbuf + 0x60);
+    card->key2.seed_byte = *(uint8_t *)(usedbuf + 0x13);
+    return 0;
+}
+
+int32_t ncgc_ninit_order(ncgc_ncard_t *const card, void *const buf, bool header_first) {
+    int32_t r;
+    if (
+        (r = init_common(card)) ||
+        (header_first && (r = init_header(card, buf))) ||
+        (r = init_chipid(card)) ||
+        (!header_first && (r = init_header(card, buf)))
+       ) {
+        return r;
+    }
+
     return 0;
 }
 

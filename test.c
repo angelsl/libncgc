@@ -78,10 +78,10 @@ struct op ops[] = {
         .delay = 0x40000
     }, { /* cur_op = 3 */
         .op_type = COMMAND,
-        .command = { .cmd = 0x9000000000000000ull, .size = 0x4, .flags = 0x8000000 }
+        .command = { .cmd = 0x9000000000000000ull, .size = 0x4, .flags = 0x8000018 }
     }, { /* cur_op = 4 */
         .op_type = COMMAND,
-        .command = { .cmd = 0x0000000000000000ull, .size = 0x1000, .flags = 0x83F1FFF }
+        .command = { .cmd = 0x0000000000000000ull, .size = 0x1000, .flags = 0x8010657 }
     }, { /* cur_op = 5 */
         .op_type = COMMAND,
         .command = { .cmd = 0x3C11A473039D4600ull, .size = 0x0, .flags = 0x10657 }
