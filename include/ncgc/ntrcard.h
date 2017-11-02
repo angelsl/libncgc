@@ -231,6 +231,30 @@ int32_t __ncgc_must_check ncgc_nbegin_key2(ncgc_ncard_t* card);
 /// reports an error while sending commands.
 int32_t __ncgc_must_check ncgc_nread_data(ncgc_ncard_t *const card, const uint32_t address, void *const buf, const size_t size);
 
+/// Sends a command `command`, with flags `flags` modified accordingly for the card state, to the card, and reads the
+/// response of size `size` to a buffer `buf`, if `buf` is not NULL.
+///
+/// Returns the number of bytes read from the card on success, or a platform-dependent error code between -1 and -99
+/// on failure.
+inline int32_t __ncgc_must_check ncgc_nsend_command(ncgc_ncard_t *const card, const uint64_t command, void *const buf,
+                                                    const size_t size, ncgc_nflags_t flags) {
+    if (card->encryption_state == NCGC_NKEY2) {
+        ncgc_nflags_set_key2_command(&flags, true);
+        ncgc_nflags_set_key2_data(&flags, true);
+    }
+    return card->platform.send_command(card, command, size, buf, buf ? size : 0, flags);
+}
+
+/// Sends a command `command`, with flags `flags` used as-is, to the card, and reads the
+/// response of size `size` to a buffer `buf`, if `buf` is not NULL.
+///
+/// Returns the number of bytes read from the card on success, or a platform-dependent error code between -1 and -99
+/// on failure.
+inline int32_t __ncgc_must_check ncgc_nsend_command_as_is(ncgc_ncard_t *const card, const uint64_t command, void *const buf,
+                                                    const size_t size, ncgc_nflags_t flags) {
+    return card->platform.send_command(card, command, size, buf, buf ? size : 0, flags);
+}
+
 #if defined(NCGC_PLATFORM_NTR)
     #include "platform_ntr.h"
 #elif defined(NCGC_PLATFORM_CTR)
