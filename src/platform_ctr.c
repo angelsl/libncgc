@@ -45,6 +45,10 @@ bool ncgc_nplatform_ctr_card_inserted(void) {
     return !(REG_CARDCONF2 & 0x1);
 }
 
+void ncgc_platform_ctr_delay(uint32_t delay) {
+    io_delay(delay);
+}
+
 static int32_t reset(ncgc_ncard_t *const card) {
     if (REG_CARDCONF2 & 0x1) {
         return -1;
@@ -89,7 +93,7 @@ void ncgc_nplatform_ctr_init(ncgc_ncard_t *card) {
         .data = { .int_data = 0 },
         .reset = reset,
         .send_command = send_command,
-        .io_delay = io_delay,
+        .io_delay = ncgc_platform_ctr_delay,
         .seed_key2 = seed_key2,
         .hw_key2 = true
     };

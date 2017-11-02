@@ -45,12 +45,16 @@ static int32_t reset(ncgc_ncard_t *const card) {
     return 0;
 }
 
+void ncgc_platform_ntr_delay(uint32_t delay) {
+    io_delay(delay/2);
+}
+
 void ncgc_nplatform_ntr_init(ncgc_ncard_t *card, bool (*resetfn)(void)) {
     card->platform = (ncgc_nplatform_t) {
         .data = { .fn_data = (void (*)(void)) resetfn },
         .reset = reset,
         .send_command = send_command,
-        .io_delay = io_delay,
+        .io_delay = ncgc_platform_ntr_delay,
         .seed_key2 = seed_key2,
         .hw_key2 = true
     };

@@ -88,7 +88,7 @@ static void seed_key2(ncgc_ncard_t *const card, uint64_t x, uint64_t y) {
     REG_ROMCNT = ROMCNT_NRESET | ROMCNT_SEC_SEED | ROMCNT_SEC_EN | ROMCNT_SEC_DAT;
 }
 
-static void io_delay(uint32_t delay) {
+inline static void io_delay(uint32_t delay) {
     /* i tried replacing this with the equivalent C code
        while (--delay) { __asm__ (""); }
        but gcc insisted on unrolling the loop so

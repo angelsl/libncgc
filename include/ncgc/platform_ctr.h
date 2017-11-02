@@ -24,6 +24,8 @@
 
 #include "nocpp.h"
 
+void ncgc_platform_ctr_delay(uint32_t delay);
+
 void ncgc_nplatform_ctr_wait_for_card(void);
 bool ncgc_nplatform_ctr_card_inserted(void);
 void ncgc_nplatform_ctr_init(ncgc_ncard_t *card);

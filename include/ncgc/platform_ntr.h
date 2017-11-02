@@ -24,5 +24,6 @@
 
 #include "nocpp.h"
 
+void ncgc_platform_ntr_delay(uint32_t delay);
 void ncgc_nplatform_ntr_init(ncgc_ncard_t *card, bool (*resetfn)(void));
 #endif /* NCGC_PLATFORM_NTR_H */
