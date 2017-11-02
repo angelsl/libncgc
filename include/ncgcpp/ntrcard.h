@@ -151,10 +151,12 @@ public:
     }
 
     inline __ncgc_must_check std::int32_t sendCommand(const uint64_t command, void *const buf, const size_t size, NTRFlags flags, bool flagsAsIs = false) {
+        c::ncgc_nflags_t flagst;
+        flagst.flags = static_cast<uint32_t>(flags);
         if (flagsAsIs) {
-            return ncgc_nsend_command_as_is(&_card, command, buf, size, (c::ncgc_nflags_t) { static_cast<uint32_t>(flags) });
+            return ncgc_nsend_command_as_is(&_card, command, buf, size, flagst);
         } else {
-            return ncgc_nsend_command(&_card, command, buf, size, (c::ncgc_nflags_t) { static_cast<uint32_t>(flags) });
+            return ncgc_nsend_command(&_card, command, buf, size, flagst);
         }
     }
 

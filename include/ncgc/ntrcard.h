@@ -20,9 +20,11 @@
 
 #include "nocpp.h"
 
+#if !defined(__cplusplus)
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
+#endif
 
 #include "compiler.h"
 #include "blowfish.h"

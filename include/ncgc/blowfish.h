@@ -20,7 +20,9 @@
 
 #include "nocpp.h"
 
+#if !defined(__cplusplus)
 #include <stdint.h>
+#endif
 
 #define NCGC_NBF_PS_N32 0x412
 
