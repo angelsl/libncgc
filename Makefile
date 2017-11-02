@@ -1,4 +1,6 @@
 .SUFFIXES:
+# don't pollute my VPATH
+VPATH		:=
 
 PLATFORMS	:=	$(patsubst platform.%.make,%,$(shell ls platform.*.make))
 .PHONY: please_specify_target clean $(PLATFORMS)
@@ -8,7 +10,7 @@ please_specify_target:
 	$(error Please specify a target: `make PLATFORM=x` or `make x`)
 
 $(PLATFORMS):
-	@make -f Makefile PLATFORM=$@
+	@$(MAKE) -f Makefile PLATFORM=$@
 
 ifeq ($(strip $(PLATFORM)),)
 .DEFAULT_GOAL	:=	please_specify_target
@@ -16,13 +18,16 @@ ifeq ($(strip $(PLATFORM)),)
 clean:
 	@rm -vrf obj/ out/
 else
+.DEFAULT_GOAL	:=	out/$(PLATFORM)/libncgc.a
+
 COMNFLAGS	:=	-g -O2 -fdiagnostics-color=always -D_GNU_SOURCE -Wall -Wextra -pedantic
-CXXFLAGS	:=	$(COMNFLAGS) $(CXXFLAGS) -std=c++14 -fno-rtti -fno-exceptions -fno-use-cxa-atexit
-CFLAGS		:=	$(COMNFLAGS) $(CFLAGS) -std=c11
+CXXFLAGS	:=	$(COMNFLAGS) -std=c++14 -fno-rtti -fno-exceptions -fno-use-cxa-atexit
+CFLAGS		:=	$(COMNFLAGS) -std=c11
 undefine COMNFLAGS
 
 CFILES		:=	blowfish.c ntrcard.c
 CXXFILES	:=
+OBJFILES	:=
 
 include platform.$(PLATFORM).make
 
@@ -59,8 +64,4 @@ fordka: out/$(PLATFORM)/libncgc.a
 out/$(PLATFORM)/libncgc.a: $(OBJFILES)
 
 -include $(patsubst %,obj/$(PLATFORM)/%.d,$(CFILES) $(CXXFILES))
-
-ifeq ($(.DEFAULT_GOAL),please_specify_target)
-.DEFAULT_GOAL	:=	out/$(PLATFORM)/libncgc.a
-endif
 endif
