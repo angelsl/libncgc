@@ -25,8 +25,8 @@
 #include <string.h>
 #include <inttypes.h>
 
-#include "include/ncgc/ntrcard.h"
-#include "src/ncgcutil.h"
+#include "../include/ncgc/ntrcard.h"
+#include "ncgcutil.h"
 
 extern const char _binary_ntr_blowfish_bin_start;
 

@@ -15,12 +15,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../../include/ncgc/platform/ctr_ntr.h"
-
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "../../include/ncgc/ntrcard.h"
+#include "../include/ncgc/ntrcard.h"
 
 #define REG_MCNT                (*(volatile uint16_t *)0x10164000)
 #define REG_MDATA               (*(volatile uint16_t *)0x10164002)
@@ -33,7 +31,7 @@
 #define REG_SEEDY_H             (*(volatile uint16_t *)0x1016401A)
 #define REG_FIFO                (*(volatile uint32_t *)0x1016401C)
 
-#include "ntrcommon.c"
+#include "platform_ntrcommon.c"
 
 #define REG_CARDCONF            (*(volatile uint16_t *)0x1000000C)
 #define REG_CARDCONF2           (*(volatile uint8_t *)0x10000010)

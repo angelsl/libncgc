@@ -1,13 +1,15 @@
 export CC	:=	gcc
 export CXX	:=	g++
 
+CFLAGS		:=	$(CFLAGS) -DNCGC_PLATFORM_TEST
+CXXFLAGS	:=	$(CXXFLAGS) -DNCGC_PLATFORM_TEST
 CFILES		:=	$(CFILES) test.c
 OBJFILES	:=	$(OBJFILES) obj/$(PLATFORM)/ntr_blowfish.bin.o
 
 ifeq ($(OS),Windows_NT)
-    TARGET := out/$(PLATFORM)/test.exe
+	TARGET := out/$(PLATFORM)/test.exe
 else
-    TARGET := out/$(PLATFORM)/test
+	TARGET := out/$(PLATFORM)/test
 endif
 
 .SECONDEXPANSION:

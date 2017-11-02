@@ -18,9 +18,11 @@
 #ifndef NCGC_PLATFORM_NTR_H
 #define NCGC_PLATFORM_NTR_H
 
-#include "../nocpp.h"
+#ifndef NCGC_NTRCARD_H
+#error platform_ntr.h should not be manually included.
+#endif
 
-#include "../ntrcard.h"
+#include "nocpp.h"
 
 void ncgc_nplatform_ntr_init(ncgc_ncard_t *card, bool (*resetfn)(void));
 #endif /* NCGC_PLATFORM_NTR_H */

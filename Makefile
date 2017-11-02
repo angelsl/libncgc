@@ -16,26 +16,27 @@ ifeq ($(strip $(PLATFORM)),)
 clean:
 	@rm -vrf obj/ out/
 else
-CFLAGS		:=	$(CFLAGS) -g -O2 -fdiagnostics-color=always -D_GNU_SOURCE -Wall -Wextra -pedantic
-CXXFLAGS	:=	$(CFLAGS) $(CXXFLAGS) -std=c++14 -fno-rtti -fno-exceptions -fno-use-cxa-atexit
-CFLAGS		:=	$(CFLAGS) -std=c11
+COMNFLAGS	:=	-g -O2 -fdiagnostics-color=always -D_GNU_SOURCE -Wall -Wextra -pedantic
+CXXFLAGS	:=	$(COMNFLAGS) $(CXXFLAGS) -std=c++14 -fno-rtti -fno-exceptions -fno-use-cxa-atexit
+CFLAGS		:=	$(COMNFLAGS) $(CFLAGS) -std=c11
+undefine COMNFLAGS
 
-CFILES		:=	src/blowfish.c src/ntrcard.c
+CFILES		:=	blowfish.c ntrcard.c
 CXXFILES	:=
 
 include platform.$(PLATFORM).make
 
 OBJFILES	:=	$(OBJFILES) $(patsubst %,obj/$(PLATFORM)/%.o,$(CFILES) $(CXXFILES))
 
-obj/$(PLATFORM)/%.c.o: %.c
+obj/$(PLATFORM)/%.c.o: src/%.c
 	@echo $^ =\> $@
 	@mkdir -p $(dir $@)
-	@$(CC) -MMD -MP -MF obj/$(PLATFORM)/$<.d $(CFLAGS) -c $< -o $@ $(ERROR_FILTER)
+	@$(CC) -MMD -MP -MF obj/$(PLATFORM)/$*.c.d $(CFLAGS) -c $< -o $@ $(ERROR_FILTER)
 
-obj/$(PLATFORM)/%.cpp.o: %.cpp
+obj/$(PLATFORM)/%.cpp.o: src/%.cpp
 	@echo $^ =\> $@
 	@mkdir -p $(dir $@)
-	@$(CXX) -MMD -MP -MF obj/$(PLATFORM)/$<.d $(CXXFLAGS) -c $< -o $@ $(ERROR_FILTER)
+	@$(CXX) -MMD -MP -MF obj/$(PLATFORM)/$*.cpp.d $(CXXFLAGS) -c $< -o $@ $(ERROR_FILTER)
 
 obj/$(PLATFORM)/%.bin.o: %.bin
 	@echo $^ =\> $@
@@ -50,6 +51,10 @@ obj/$(PLATFORM)/%.bin.o: %.bin
 
 clean:
 	@rm -vrf obj/$(PLATFORM) out/$(PLATFORM)
+
+fordka: out/$(PLATFORM)/libncgc.a
+	@echo $^ =\> $@
+	@cp $^ $@
 
 out/$(PLATFORM)/libncgc.a: $(OBJFILES)
 

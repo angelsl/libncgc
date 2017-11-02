@@ -15,15 +15,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef NCGC_PLATFORM_CTR_NTR_H
-#define NCGC_PLATFORM_CTR_NTR_H
+#ifndef NCGC_PLATFORM_CTR_H
+#define NCGC_PLATFORM_CTR_H
 
-#include "../nocpp.h"
+#ifndef NCGC_NTRCARD_H
+#error platform_ntr.h should not be manually included.
+#endif
 
-#include "../ntrcard.h"
+#include "nocpp.h"
 
 void ncgc_nplatform_ctr_wait_for_card(void);
 bool ncgc_nplatform_ctr_card_inserted(void);
 void ncgc_nplatform_ctr_init(ncgc_ncard_t *card);
 
-#endif /* NCGC_PLATFORM_CTR_NTR_H */
+#endif /* NCGC_PLATFORM_CTR_H */

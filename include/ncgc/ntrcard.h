@@ -230,4 +230,12 @@ int32_t __must_check ncgc_nbegin_key2(ncgc_ncard_t* card);
 /// Returns 0 on success, -1 if the encryption state is not currently KEY2, or a positive error code if the platform
 /// reports an error while sending commands.
 int32_t __must_check ncgc_nread_data(ncgc_ncard_t *const card, const uint32_t address, void *const buf, const size_t size);
+
+#if defined(NCGC_PLATFORM_NTR)
+    #include "platform_ntr.h"
+#elif defined(NCGC_PLATFORM_CTR)
+    #include "platform_ctr.h"
+#elif !defined(NCGC_PLATFORM_TEST)
+    #error No NCGC platform defined.
+#endif
 #endif /* NCGC_NTRCARD_H */

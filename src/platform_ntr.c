@@ -15,12 +15,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../../include/ncgc/platform/ntr.h"
-
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "../../include/ncgc/ntrcard.h"
+#include "../include/ncgc/ntrcard.h"
 
 #define REG_MCNT                (*(volatile uint16_t *)0x40001A0)
 #define REG_MDATA               (*(volatile uint16_t *)0x40001A2)
@@ -33,7 +31,7 @@
 #define REG_SEEDY_H             (*(volatile uint16_t *)0x40001BA)
 #define REG_FIFO                (*(volatile uint32_t *)0x4100010)
 
-#include "ntrcommon.c"
+#include "platform_ntrcommon.c"
 
 static int32_t reset(ncgc_ncard_t *const card) {
     bool (*resetfn)(void) = (bool (*)(void)) card->platform.data.fn_data;
