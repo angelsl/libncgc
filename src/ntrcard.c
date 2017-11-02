@@ -69,7 +69,7 @@ static uint64_t key1_construct(ncgc_ncard_t *const card, const uint8_t cmdarg, c
     return BSWAP64(cmd);
 }
 
-static __must_check int32_t key1_cmd(ncgc_ncard_t *const card, const uint8_t cmdarg, const uint16_t arg, const uint32_t ij,
+static __ncgc_must_check int32_t key1_cmd(ncgc_ncard_t *const card, const uint8_t cmdarg, const uint16_t arg, const uint32_t ij,
     const uint32_t read_size, void *const dest, const uint32_t flags) {
     uint64_t cmd = key1_construct(card, cmdarg, arg, ij);
     return P(card).send_command(card, cmd, read_size, dest, read_size, F(flags));
@@ -85,7 +85,7 @@ static void seed_key2(ncgc_ncard_t *const card) {
     }
 }
 
-static __must_check int32_t init_common(ncgc_ncard_t *const card) {
+static __ncgc_must_check int32_t init_common(ncgc_ncard_t *const card) {
     int32_t r;
     if ((r = P(card).reset(card))) {
         return -r+100;
@@ -103,7 +103,7 @@ static __must_check int32_t init_common(ncgc_ncard_t *const card) {
     return 0;
 }
 
-static __must_check int32_t init_chipid(ncgc_ncard_t *const card) {
+static __ncgc_must_check int32_t init_chipid(ncgc_ncard_t *const card) {
     int32_t r;
     if ((r = P(card).send_command(card, CMD_RAW_CHIPID, 4, &card->raw_chipid, 4, F(FLAGS_CLK_SLOW | FLAGS_DELAY1(0x18)))) < 0) {
         return -r+300;
@@ -111,7 +111,7 @@ static __must_check int32_t init_chipid(ncgc_ncard_t *const card) {
     return 0;
 }
 
-static __must_check int32_t init_header(ncgc_ncard_t *const card, void *const buf) {
+static __ncgc_must_check int32_t init_header(ncgc_ncard_t *const card, void *const buf) {
     char ourbuf[0x68] = {0};
     char *usedbuf = buf ? buf : ourbuf;
 
@@ -148,7 +148,7 @@ void ncgc_nsetup_blowfish(ncgc_ncard_t *const card, const uint32_t ps[NCGC_NBF_P
     card->key1.key[1] = card->hdr.game_code >> 1;
     card->key1.key[2] = card->hdr.game_code << 1;
     memcpy(card->key1.ps, ps, sizeof(card->key1.ps));
-    _Static_assert(sizeof(card->key1.ps) == 0x1048, "Wrong Blowfish PS size");
+    __ncgc_static_assert(sizeof(card->key1.ps) == 0x1048, "Wrong Blowfish PS size");
 
     ncgc_nbf_apply_key(card->key1.ps, card->key1.key);
     ncgc_nbf_apply_key(card->key1.ps, card->key1.key);
@@ -239,7 +239,7 @@ int32_t ncgc_nbegin_key2(ncgc_ncard_t *const card) {
     return 0;
 }
 
-static __must_check int32_t key2_read(ncgc_ncard_t *const card, uint32_t address, char buf[0x200]) {
+static __ncgc_must_check int32_t key2_read(ncgc_ncard_t *const card, uint32_t address, char buf[0x200]) {
     return P(card).send_command(card, 0xB7 | (((uint64_t) BSWAP32(address)) << 8), 0x200, buf, 0x200, F(card->key2.romcnt));
 }
 

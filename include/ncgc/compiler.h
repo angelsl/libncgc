@@ -19,9 +19,10 @@
 #define NCGC_COMPILER_H
 
 #ifdef __GNUC__
-    #define __must_check __attribute__((warn_unused_result))
+    #define __ncgc_must_check __attribute__((warn_unused_result))
+    #define __ncgc_static_assert(x, y) _Static_assert(x, y)
 #else
-    #define __must_check
-    #define _Static_assert(x, y)
+    #define __ncgc_must_check
+    #define __ncgc_static_assert(x, y)
 #endif
 #endif /* NCGC_COMPILER_H */

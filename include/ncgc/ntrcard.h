@@ -50,13 +50,13 @@ typedef struct ncgc_nplatform {
     /// `card->encryption_state` is set to `NCGC_NRAW` upon success.
     ///
     /// Returns 0 on success, or a platform-dependent error code between -1 and -99 on failure.
-    int32_t __must_check (*reset)(struct ncgc_ncard *card);
+    int32_t __ncgc_must_check (*reset)(struct ncgc_ncard *card);
 
     /// Sends a command and reads the response.
     ///
     /// Returns the number of bytes read from the card on success, or a platform-dependent error code between -1 and -99
     /// on failure.
-    int32_t __must_check (*send_command)(struct ncgc_ncard *card, uint64_t cmd, uint32_t read_size, void *dest, uint32_t dest_size, ncgc_nflags_t flags);
+    int32_t __ncgc_must_check (*send_command)(struct ncgc_ncard *card, uint64_t cmd, uint32_t read_size, void *dest, uint32_t dest_size, ncgc_nflags_t flags);
 
     void (*io_delay)(uint32_t delay);
 
@@ -178,7 +178,7 @@ inline ncgc_nflags_t ncgc_nflags_construct(const uint16_t predelay,
 ///
 /// If header_first is true, the header is read before the chip ID. Otherwise,
 /// the chip ID is read first.
-int32_t __must_check ncgc_ninit_order(ncgc_ncard_t *const card, void *const buf, bool header_first);
+int32_t __ncgc_must_check ncgc_ninit_order(ncgc_ncard_t *const card, void *const buf, bool header_first);
 
 /// Initialises the card slot and card, optionally reading the header into `buf`, if `buf` is not null.
 /// If specified, `buf` should be at least 0x1000 bytes.
@@ -188,7 +188,7 @@ int32_t __must_check ncgc_ninit_order(ncgc_ncard_t *const card, void *const buf,
 /// Returns 0 on success, -1 if the encryption state is not currently RAW, or a positive error code if the platform
 /// reports an error during the card reset or while sending commands. If `buf` is specified, the card header will be
 /// read into `buf`.
-inline int32_t __must_check ncgc_ninit(ncgc_ncard_t *const card, void *const buf) {
+inline int32_t __ncgc_must_check ncgc_ninit(ncgc_ncard_t *const card, void *const buf) {
     return ncgc_ninit_order(card, buf, false);
 }
 
@@ -208,13 +208,13 @@ inline void ncgc_nsetup_blowfish_as_is(ncgc_ncard_t* card, const uint32_t ps[NCG
 /// Returns 0 on success, -1 if the encryption state is not currently RAW, -2 if the KEY1 CHIPID command result does
 /// not match the raw chip ID stored in `card`, or a positive error code if the platform reports an error while sending
 /// commands.
-int32_t __must_check ncgc_nbegin_key1(ncgc_ncard_t* card);
+int32_t __ncgc_must_check ncgc_nbegin_key1(ncgc_ncard_t* card);
 
 /// Reads the secure area. `dest` must be at least 0x4000 bytes.
 ///
 /// Returns 0 on success, -1 if the encryption state is not currently KEY1, or a positive error code if the platform
 /// reports an error while sending commands. The secure area will be read into `dest`.
-int32_t __must_check ncgc_nread_secure_area(ncgc_ncard_t* card, void *const dest);
+int32_t __ncgc_must_check ncgc_nread_secure_area(ncgc_ncard_t* card, void *const dest);
 
 /// Brings the card into KEY2 mode.
 ///
@@ -223,13 +223,13 @@ int32_t __must_check ncgc_nread_secure_area(ncgc_ncard_t* card, void *const dest
 /// Returns 0 on success, -1 if the encryption state is not currently KEY1, -2 if the KEY2 CHIPID command result does
 /// not match raw the chip ID stored in `card`, or a positive error code if the platform reports an error while sending
 /// commands.
-int32_t __must_check ncgc_nbegin_key2(ncgc_ncard_t* card);
+int32_t __ncgc_must_check ncgc_nbegin_key2(ncgc_ncard_t* card);
 
 /// Reads the card data using the NTR 0xB7 command.
 ///
 /// Returns 0 on success, -1 if the encryption state is not currently KEY2, or a positive error code if the platform
 /// reports an error while sending commands.
-int32_t __must_check ncgc_nread_data(ncgc_ncard_t *const card, const uint32_t address, void *const buf, const size_t size);
+int32_t __ncgc_must_check ncgc_nread_data(ncgc_ncard_t *const card, const uint32_t address, void *const buf, const size_t size);
 
 #if defined(NCGC_PLATFORM_NTR)
     #include "platform_ntr.h"
