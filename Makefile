@@ -61,6 +61,7 @@ fordka: lib/libncgc.a
 
 lib/libncgc.a: out/$(PLATFORM)/libncgc.a
 	@echo $^ =\> $@
+	@mkdir -p $(dir $@)
 	@cp $^ $@
 
 out/$(PLATFORM)/libncgc.a: $(OBJFILES)
