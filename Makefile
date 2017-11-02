@@ -3,7 +3,7 @@
 VPATH		:=
 
 PLATFORMS	:=	$(patsubst platform.%.make,%,$(shell ls platform.*.make))
-.PHONY: please_specify_target clean $(PLATFORMS)
+.PHONY: please_specify_target clean fordka $(PLATFORMS)
 
 please_specify_target:
 	$(info Supported platforms: $(PLATFORMS))
@@ -57,7 +57,9 @@ obj/$(PLATFORM)/%.bin.o: %.bin
 clean:
 	@rm -vrf obj/$(PLATFORM) out/$(PLATFORM)
 
-fordka: out/$(PLATFORM)/libncgc.a
+fordka: lib/libncgc.a
+
+lib/libncgc.a: out/$(PLATFORM)/libncgc.a
 	@echo $^ =\> $@
 	@cp $^ $@
 
