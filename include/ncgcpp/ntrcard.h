@@ -45,9 +45,9 @@ extern "C" {
 namespace ncgc {
 inline void delay(std::uint32_t delay) {
 #if defined(NCGC_PLATFORM_NTR)
-    ncgc_platform_ntr_delay(delay);
+    c::ncgc_platform_ntr_delay(delay);
 #elif defined(NCGC_PLATFORM_CTR)
-    ncgc_platform_ctr_delay(delay);
+    c::ncgc_platform_ctr_delay(delay);
 #endif
 }
 
@@ -98,22 +98,23 @@ public:
 };
 
 class NTRCard {
+public:
 #if defined(NCGC_PLATFORM_NTR)
     template<typename ResetFn>
     inline NTRCard(ResetFn f) {
-        ncgc_nplatform_ntr_init(&_card, f);
+        c::ncgc_nplatform_ntr_init(&_card, f);
     }
 #elif defined(NCGC_PLATFORM_CTR)
     inline NTRCard() {
-        ncgc_nplatform_ctr_init(&_card);
+        c::ncgc_nplatform_ctr_init(&_card);
     }
 
     inline static void waitForCard() {
-        ncgc_nplatform_ctr_wait_for_card();
+        c::ncgc_nplatform_ctr_wait_for_card();
     }
 
     inline static bool cardInserted() {
-        return ncgc_nplatform_ctr_card_inserted();
+        return c::ncgc_nplatform_ctr_card_inserted();
     }
 #endif
 
@@ -159,6 +160,10 @@ class NTRCard {
 
     inline NTRState state() {
         return static_cast<NTRState>(_card.encryption_state);
+    }
+
+    inline void state(NTRState state) {
+        _card.encryption_state = static_cast<c::ncgc_nencryption_state_t>(state);
     }
 
     inline std::uint32_t gameCode() {
