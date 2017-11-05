@@ -293,7 +293,7 @@ int32_t __ncgc_must_check ncgc_nspi_command(ncgc_ncard_t *const card, const uint
         }
     }
     for (ctr = 0; ctr < response_length; ++ctr) {
-        if ((r = P(card).spi_transact(card, 0xFF, response ? response + response_length : NULL, (ctr + 1) == response_length))) {
+        if ((r = P(card).spi_transact(card, 0xFF, response ? response + ctr : NULL, (ctr + 1) == response_length))) {
             return r;
         }
     }
