@@ -288,7 +288,7 @@ int32_t __ncgc_must_check ncgc_nspi_command(ncgc_ncard_t *const card, const uint
     size_t ctr;
     int32_t r;
     for (ctr = 0; ctr < command_length; ++ctr) {
-        if ((r = P(card).spi_transact(card, command[ctr], NULL, false))) {
+        if ((r = P(card).spi_transact(card, command[ctr], NULL, !response_length && (ctr + 1) == command_length))) {
             return r;
         }
     }
