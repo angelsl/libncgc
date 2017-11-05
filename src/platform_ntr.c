@@ -54,6 +54,7 @@ void ncgc_nplatform_ntr_init(ncgc_ncard_t *card, bool (*resetfn)(void)) {
         .data = { .fn_data = (void (*)(void)) resetfn },
         .reset = reset,
         .send_command = send_command,
+        .spi_transact = spi_transact,
         .io_delay = ncgc_platform_ntr_delay,
         .seed_key2 = seed_key2,
         .hw_key2 = true

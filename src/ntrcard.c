@@ -48,9 +48,6 @@
 #define CMD_KEY2_DATA_READ      0xB7u
 #define CMD_KEY2_CHIPID         0xB8u
 
-#define MCNT_CR1_ENABLE         0x8000u
-#define MCNT_CR1_IRQ            0x4000u
-
 #define P(card)                 ((card)->platform)
 #define PDATA(card)             ((card)->platform.data)
 #define F(flags)                ((ncgc_nflags_t) { (flags) })
@@ -283,5 +280,22 @@ int32_t ncgc_nread_data(ncgc_ncard_t *const card, const uint32_t address, void *
         memcpy(cur_buf, buf, size_left);
     }
 
+    return 0;
+}
+
+int32_t __ncgc_must_check ncgc_nspi_command(ncgc_ncard_t *const card, const uint8_t *const command, const size_t command_length,
+                                            uint8_t *const response, const size_t response_length) {
+    size_t ctr;
+    int32_t r;
+    for (ctr = 0; ctr < command_length; ++ctr) {
+        if ((r = P(card).spi_transact(card, command[ctr], NULL, false))) {
+            return r;
+        }
+    }
+    for (ctr = 0; ctr < response_length; ++ctr) {
+        if ((r = P(card).spi_transact(card, 0xFF, response ? response + response_length : NULL, (ctr + 1) == response_length))) {
+            return r;
+        }
+    }
     return 0;
 }

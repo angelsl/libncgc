@@ -60,6 +60,13 @@ typedef struct ncgc_nplatform {
     /// on failure.
     int32_t __ncgc_must_check (*send_command)(struct ncgc_ncard *card, uint64_t cmd, uint32_t read_size, void *dest, uint32_t dest_size, ncgc_nflags_t flags);
 
+    /// Sends one byte over the SPI bus, and receives one byte back.
+    ///
+    /// If `last` is set, SPI CS should be pulled high after the transaction.
+    ///
+    /// Returns 0 on success, or a platform-dependent error code between -1 and -99 on failure.
+    int32_t __ncgc_must_check (*spi_transact)(struct ncgc_ncard *card, uint8_t in, uint8_t *out, bool last);
+
     void (*io_delay)(uint32_t delay);
 
     /// Sets the KEY2 registers.
@@ -256,6 +263,14 @@ inline int32_t __ncgc_must_check ncgc_nsend_command_as_is(ncgc_ncard_t *const ca
                                                     const size_t size, ncgc_nflags_t flags) {
     return card->platform.send_command(card, command, size, buf, buf ? size : 0, flags);
 }
+
+
+/// Sends an SPI command `command` of length `command_length`, then receives a response of length `response_length`
+/// into `response`, if `response` is not NULL.
+///
+/// Returns 0 on success, or a platform-dependent error code between -1 and -99 on failure.
+int32_t __ncgc_must_check ncgc_nspi_command(ncgc_ncard_t *card, const uint8_t *command, size_t command_length,
+                                            uint8_t *response, size_t response_length);
 
 #if defined(NCGC_PLATFORM_NTR)
     #include "platform_ntr.h"

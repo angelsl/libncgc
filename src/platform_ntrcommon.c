@@ -37,6 +37,9 @@
 
 #define MCNT_CR1_ENABLE         0x8000u
 #define MCNT_CR1_IRQ            0x4000u
+#define MCNT_MODE_SPI           0x2000u
+#define MCNT_SPI_CS             0x0040u
+#define MCNT_SPI_BUSY           0x0080u
 
 static int32_t send_command(ncgc_ncard_t *const card, const uint64_t cmd, const uint32_t read_size,
         void *const dest, const uint32_t dest_size, const ncgc_nflags_t flags) {
@@ -58,6 +61,7 @@ static int32_t send_command(ncgc_ncard_t *const card, const uint64_t cmd, const 
         ((ncgc_nflags_key2_command(flags) || ncgc_nflags_key2_data(flags)) ? ROMCNT_SEC_EN : 0) |
         (flags.flags & ROMCNT_CMD_SETTINGS);
 
+    REG_MCNT = MCNT_CR1_ENABLE | MCNT_CR1_IRQ;
     REG_CMD = cmd;
     REG_ROMCNT = bitflags;
 
@@ -101,4 +105,19 @@ inline static void io_delay(uint32_t delay) {
         : [delay] "=r" (delay)
         : "0" (delay)
     );
+}
+
+static int32_t spi_transact(ncgc_ncard_t *const card, uint8_t in, uint8_t *out, bool last) {
+    (void)card;
+    REG_MCNT = MCNT_CR1_ENABLE | MCNT_MODE_SPI | (last ? 0 : MCNT_SPI_CS);
+    REG_MDATA = in;
+    while (REG_MCNT & MCNT_SPI_BUSY);
+    uint8_t data = REG_MDATA;
+    if (out) {
+        *out = data;
+    }
+    if (last) {
+        io_delay(0x20);
+    }
+    return 0;
 }
