@@ -234,7 +234,7 @@ int32_t __ncgc_must_check ncgc_nread_secure_area(ncgc_ncard_t* card, void *const
 /// commands.
 int32_t __ncgc_must_check ncgc_nbegin_key2(ncgc_ncard_t* card);
 
-/// Reads the card data using the NTR 0xB7 command.
+/// Reads the card data using the NTR 0xB7 command into `buf`, if `buf` is not NULL.
 ///
 /// Returns 0 on success, -1 if the encryption state is not currently KEY2, or a positive error code if the platform
 /// reports an error while sending commands.

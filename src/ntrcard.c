@@ -236,8 +236,8 @@ int32_t ncgc_nbegin_key2(ncgc_ncard_t *const card) {
     return 0;
 }
 
-static __ncgc_must_check int32_t key2_read(ncgc_ncard_t *const card, uint32_t address, char buf[0x200]) {
-    return P(card).send_command(card, 0xB7 | (((uint64_t) BSWAP32(address)) << 8), 0x200, buf, 0x200, F(card->key2.romcnt));
+static __ncgc_must_check int32_t key2_read(ncgc_ncard_t *const card, uint32_t address, char *buf) {
+    return P(card).send_command(card, 0xB7 | (((uint64_t) BSWAP32(address)) << 8), 0x200, buf, buf ? 0x200 : 0, F(card->key2.romcnt));
 }
 
 int32_t ncgc_nread_data(ncgc_ncard_t *const card, const uint32_t address, void *const buf, const size_t size) {
@@ -257,9 +257,11 @@ int32_t ncgc_nread_data(ncgc_ncard_t *const card, const uint32_t address, void *
             return -r+100;
         }
 
-        memcpy(cur_buf, buf + (address - cur_addr), bytes_completed);
+        if (cur_buf) {
+            memcpy(cur_buf, buf + (address - cur_addr), bytes_completed);
+            cur_buf += bytes_completed;
+        }
         size_left -= bytes_completed;
-        cur_buf += bytes_completed;
         cur_addr += 0x200;
     }
 
@@ -268,7 +270,9 @@ int32_t ncgc_nread_data(ncgc_ncard_t *const card, const uint32_t address, void *
             return -r+200;
         }
         size_left -= 0x200;
-        cur_buf += 0x200;
+        if (cur_buf) {
+            cur_buf += 0x200;
+        }
         cur_addr += 0x200;
     }
 
@@ -277,7 +281,9 @@ int32_t ncgc_nread_data(ncgc_ncard_t *const card, const uint32_t address, void *
         if ((r = key2_read(card, cur_addr, buf)) < 0) {
             return -r+300;
         }
-        memcpy(cur_buf, buf, size_left);
+        if (cur_buf) {
+            memcpy(cur_buf, buf, size_left);
+        }
     }
 
     return 0;
