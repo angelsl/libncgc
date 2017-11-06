@@ -41,10 +41,7 @@
 #define MCNT_SPI_CS             0x0040u
 #define MCNT_SPI_BUSY           0x0080u
 
-static int32_t send_command(ncgc_ncard_t *const card, const uint64_t cmd, const uint32_t read_size,
-        void *const dest, const uint32_t dest_size, const ncgc_nflags_t flags) {
-    (void)card;
-
+static inline int32_t set_registers(const uint64_t cmd, const uint32_t read_size, const ncgc_nflags_t flags, bool write) {
     uint32_t blksizeflag;
     switch (read_size) {
         default: return -1;
@@ -59,11 +56,23 @@ static int32_t send_command(ncgc_ncard_t *const card, const uint64_t cmd, const 
     }
     uint32_t bitflags = ROMCNT_ACTIVATE | ROMCNT_NRESET | ROMCNT_BLK_SIZE(blksizeflag) |
         ((ncgc_nflags_key2_command(flags) || ncgc_nflags_key2_data(flags)) ? ROMCNT_SEC_EN : 0) |
-        (flags.flags & ROMCNT_CMD_SETTINGS);
+        (flags.flags & ROMCNT_CMD_SETTINGS) |
+        (write ? ROMCNT_WR : 0);
 
     REG_MCNT = MCNT_CR1_ENABLE | MCNT_CR1_IRQ;
     REG_CMD = cmd;
     REG_ROMCNT = bitflags;
+
+    return 0;
+}
+
+static int32_t send_command(ncgc_ncard_t *const card, const uint64_t cmd, const uint32_t read_size,
+        void *const dest, const uint32_t dest_size, const ncgc_nflags_t flags) {
+    (void)card;
+
+    if (set_registers(cmd, read_size, flags, false)) {
+        return -1;
+    }
 
     uint32_t *cur = dest;
     uint32_t ctr = 0;
@@ -74,6 +83,27 @@ static int32_t send_command(ncgc_ncard_t *const card, const uint64_t cmd, const 
                 *(cur++) = data;
             } else {
                 (void)data;
+            }
+            ctr += 4;
+        }
+	} while (REG_ROMCNT & ROMCNT_BUSY);
+    return ctr;
+}
+
+static int32_t send_write_command(ncgc_ncard_t *const card, const uint64_t cmd,
+        const void *const src, const uint32_t src_size, const ncgc_nflags_t flags) {
+    (void)card;
+
+    set_registers(cmd, src_size, flags, true);
+
+    const uint32_t *cur = src;
+    uint32_t ctr = 0;
+    do {
+        if (REG_ROMCNT & ROMCNT_DATA_READY) {
+            if (src && ctr < src_size) {
+                REG_FIFO = *(cur++);
+            } else {
+                REG_FIFO = 0;
             }
             ctr += 4;
         }

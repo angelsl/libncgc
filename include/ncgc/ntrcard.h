@@ -60,6 +60,12 @@ typedef struct ncgc_nplatform {
     /// on failure.
     int32_t __ncgc_must_check (*send_command)(struct ncgc_ncard *card, uint64_t cmd, uint32_t read_size, void *dest, uint32_t dest_size, ncgc_nflags_t flags);
 
+    /// Sends a write command.
+    ///
+    /// Returns the number of bytes written to (excluding the command) the card on success, or a platform-dependent error code between -1 and -99
+    /// on failure.
+    int32_t __ncgc_must_check (*send_write_command)(struct ncgc_ncard *card, uint64_t cmd, const void *src, uint32_t src_size, ncgc_nflags_t flags);
+
     /// Sends one byte over the SPI bus, and receives one byte back.
     ///
     /// If `last` is set, SPI CS should be pulled high after the transaction.
@@ -264,6 +270,29 @@ inline int32_t __ncgc_must_check ncgc_nsend_command_as_is(ncgc_ncard_t *const ca
     return card->platform.send_command(card, command, size, buf, buf ? size : 0, flags);
 }
 
+/// Sends a command `command`, with flags `flags` modified accordingly for the card state, to the card, and then writes
+/// the data of size `size` to the card.
+///
+/// Returns the number of bytes written to the card on success, or a platform-dependent error code between -1 and -99
+/// on failure.
+inline int32_t __ncgc_must_check ncgc_nsend_write_command(ncgc_ncard_t *const card, const uint64_t command, const void *const buf,
+                                                    const size_t size, ncgc_nflags_t flags) {
+    if (card->encryption_state == NCGC_NKEY2) {
+        ncgc_nflags_set_key2_command(&flags, true);
+        ncgc_nflags_set_key2_data(&flags, true);
+    }
+    return card->platform.send_write_command(card, command, buf, size, flags);
+}
+
+/// Sends a command `command`, with flags `flags` used as-is, to the card, and then writes the data of size
+/// `size` to the card.
+///
+/// Returns the number of bytes written to the card on success, or a platform-dependent error code between -1 and -99
+/// on failure.
+inline int32_t __ncgc_must_check ncgc_nsend_write_command_as_is(ncgc_ncard_t *const card, const uint64_t command, const void *const buf,
+                                                    const size_t size, ncgc_nflags_t flags) {
+    return card->platform.send_write_command(card, command, buf, size, flags);
+}
 
 /// Sends an SPI command `command` of length `command_length`, then receives a response of length `response_length`
 /// into `response`, if `response` is not NULL.

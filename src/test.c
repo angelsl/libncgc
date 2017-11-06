@@ -207,6 +207,12 @@ static int32_t send_command(ncgc_ncard_t *const card, const uint64_t cmdle, cons
     return read_size;
 }
 
+static int32_t send_write_command(ncgc_ncard_t *const card, const uint64_t cmdle,
+        const void *const dest, const uint32_t dest_size, const ncgc_nflags_t flags) {
+    (void)card; (void)cmdle; (void)dest; (void)dest_size; (void)flags;
+    return 0;
+}
+
 static int32_t spi_transact(ncgc_ncard_t *const card, uint8_t in, uint8_t *out, bool last) {
     (void)card; (void)in; (void)out; (void)last;
     return 0;
@@ -278,6 +284,7 @@ static ncgc_ncard_t card = {
         .data = { .int_data = 0 },
         .reset = reset,
         .send_command = send_command,
+        .send_write_command = send_write_command,
         .spi_transact = spi_transact,
         .io_delay = io_delay,
         .seed_key2 = seed_key2,
