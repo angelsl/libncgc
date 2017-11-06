@@ -117,7 +117,9 @@ static int32_t spi_transact(ncgc_ncard_t *const card, uint8_t in, uint8_t *out, 
         *out = data;
     }
     if (last) {
-        io_delay(0x20);
+        io_delay(0x64);
+        REG_MCNT = 0;
+        io_delay(0x1F4);
     }
     return 0;
 }
