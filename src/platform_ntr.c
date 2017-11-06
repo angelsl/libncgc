@@ -21,7 +21,7 @@
 #include "../include/ncgc/ntrcard.h"
 
 #define REG_MCNT                (*(volatile uint16_t *)0x40001A0)
-#define REG_MDATA               (*(volatile uint16_t *)0x40001A2)
+#define REG_MDATA               (*(volatile uint8_t *)0x40001A2)
 #define REG_ROMCNT              (*(volatile uint32_t *)0x40001A4)
 #define REG_CMDP                ((volatile uint8_t *)0x40001A8)
 #define REG_CMD                 (*(volatile uint64_t *)0x40001A8)
