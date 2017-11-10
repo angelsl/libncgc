@@ -18,21 +18,13 @@
 #ifndef NCGCPP_NTRCARD_H
 #define NCGCPP_NTRCARD_H
 
-#if !defined(__cplusplus)
-#error This file should not be included from C.
-#endif
-
-#if defined(NCGC_PLATFORM_NTR)
-#elif defined(NCGC_PLATFORM_CTR)
-#elif defined(NCGC_PLATFORM_TEST)
-#else
-    // FIXME no C++ tests yet
-    #error No NCGC platform defined.
-#endif
+#include "noc.h"
 
 #include <cstdint>
 #include <cstddef>
 #include <cstring>
+
+#include "err.h"
 
 namespace ncgc {
 namespace c {
@@ -110,18 +102,6 @@ public:
 
     constexpr operator std::uint32_t() const { return romcnt; }
     constexpr NTRFlags(const std::uint32_t& from) : romcnt(from) {}
-};
-
-class Err {
-    const c::ncgc_err_t err;
-public:
-    constexpr bool unsupported() const { return err == c::NCGC_EUNSUP; }
-    constexpr int errNo() const { return static_cast<int>(err); }
-    const char *desc() const { return c::ncgc_err_desc(err); }
-
-    constexpr Err(const c::ncgc_err_t& from) : err(from) {}
-    constexpr operator c::ncgc_err_t() const { return err; }
-    constexpr operator bool() const { return err == c::NCGC_EOK; }
 };
 
 class NTRCard {
