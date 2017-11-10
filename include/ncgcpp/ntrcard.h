@@ -102,6 +102,7 @@ public:
 
     constexpr operator std::uint32_t() const { return romcnt; }
     constexpr NTRFlags(const std::uint32_t& from) : romcnt(from) {}
+    constexpr NTRFlags() : romcnt(0) {}
 };
 
 class NTRCard {
