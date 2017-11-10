@@ -43,7 +43,7 @@ extern "C" {
 
 namespace ncgc {
 class Err {
-    const c::ncgc_err_t err;
+    c::ncgc_err_t err;
 public:
     constexpr bool unsupported() const { return err == c::NCGC_EUNSUP; }
     constexpr int errNo() const { return static_cast<int>(err); }

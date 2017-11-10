@@ -68,7 +68,7 @@ enum class NTRState {
 class NTRCard;
 class NTRFlags {
     /// The raw ROMCNT value.
-    const std::uint32_t romcnt;
+    std::uint32_t romcnt;
     friend NTRCard;
 public:
     constexpr bool bit(uint32_t bit) const { return !!(romcnt & (1 << bit)); }
