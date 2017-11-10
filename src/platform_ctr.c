@@ -84,7 +84,7 @@ static ncgc_err_t reset(ncgc_ncard_t *const card) {
     REG_ROMCNT = ROMCNT_NRESET | ROMCNT_SEC_SEED;
     while (REG_ROMCNT & ROMCNT_BUSY);
 
-    card->encryption_state = NCGC_NPREINIT;
+    card->state = NCGC_NPREINIT;
     return NCGC_EOK;
 }
 

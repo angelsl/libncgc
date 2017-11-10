@@ -85,8 +85,12 @@ typedef struct ncgc_nplatform {
 } ncgc_nplatform_t;
 
 typedef enum {
-    NCGC_NUNKNOWN, NCGC_NPREINIT, NCGC_NRAW, NCGC_NKEY1, NCGC_NKEY2
-} ncgc_nencryption_state_t;
+    NCGC_NUNKNOWN = 0,
+    NCGC_NPREINIT = 10,
+    NCGC_NRAW = 11,
+    NCGC_NKEY1 = 12,
+    NCGC_NKEY2 = 13
+} ncgc_nstate_t;
 
 typedef struct ncgc_ncard {
     /// The chip ID, stored in `ntrcard_init`
@@ -118,7 +122,7 @@ typedef struct ncgc_ncard {
         uint16_t l;
     } key1;
 
-    ncgc_nencryption_state_t encryption_state;
+    ncgc_nstate_t state;
 
     struct {
         /// The KEY2 seed byte, as in the header
@@ -248,7 +252,7 @@ ncgc_err_t __ncgc_must_check ncgc_nread_data(ncgc_ncard_t *card, uint32_t addres
 /// Returns the error code from the first platform function that fails, if any, or `NCGC_EOK` on success.
 inline ncgc_err_t __ncgc_must_check ncgc_nsend_command(ncgc_ncard_t *const card, const uint64_t command, void *const buf,
                                                     const size_t size, ncgc_nflags_t flags) {
-    if (card->encryption_state == NCGC_NKEY2) {
+    if (card->state == NCGC_NKEY2) {
         ncgc_nflags_set_key2_command(&flags, true);
         ncgc_nflags_set_key2_data(&flags, true);
     }
@@ -270,7 +274,7 @@ inline ncgc_err_t __ncgc_must_check ncgc_nsend_command_as_is(ncgc_ncard_t *const
 /// Returns the error code from the first platform function that fails, if any, or `NCGC_EOK` on success.
 inline ncgc_err_t __ncgc_must_check ncgc_nsend_write_command(ncgc_ncard_t *const card, const uint64_t command, const void *const buf,
                                                     const size_t size, ncgc_nflags_t flags) {
-    if (card->encryption_state == NCGC_NKEY2) {
+    if (card->state == NCGC_NKEY2) {
         ncgc_nflags_set_key2_command(&flags, true);
         ncgc_nflags_set_key2_data(&flags, true);
     }

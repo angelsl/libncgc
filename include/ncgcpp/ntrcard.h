@@ -59,11 +59,11 @@ inline void delay(std::uint32_t delay) {
 }
 
 enum class NTRState {
-    Preinit,
-    Raw,
-    Key1,
-    Key2,
-    Unknown
+    Unknown = 0,
+    Preinit = 10,
+    Raw = 11,
+    Key1 = 12,
+    Key2 = 13
 };
 
 class NTRCard;
@@ -185,11 +185,11 @@ public:
     }
 
     inline NTRState state() {
-        return static_cast<NTRState>(_card.encryption_state);
+        return static_cast<NTRState>(_card.state);
     }
 
     inline void state(NTRState state) {
-        _card.encryption_state = static_cast<c::ncgc_nencryption_state_t>(state);
+        _card.state = static_cast<c::ncgc_nstate_t>(state);
     }
 
     inline std::uint32_t gameCode() {

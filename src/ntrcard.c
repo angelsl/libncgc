@@ -85,13 +85,13 @@ static void seed_key2(ncgc_ncard_t *const card) {
 static __ncgc_must_check ncgc_err_t init_common(ncgc_ncard_t *const card) {
     ncgc_err_t r;
 
-    if (card->encryption_state != NCGC_NPREINIT) {
+    if (card->state != NCGC_NPREINIT) {
         if ((r = P(card).reset(card))) {
             return r;
         }
     }
 
-    if (card->encryption_state != NCGC_NPREINIT) {
+    if (card->state != NCGC_NPREINIT) {
         return NCGC_ECSTATE;
     }
 
@@ -140,7 +140,7 @@ ncgc_err_t ncgc_ninit_order(ncgc_ncard_t *const card, void *const buf, bool head
         return r;
     }
 
-    card->encryption_state = NCGC_NRAW;
+    card->state = NCGC_NRAW;
     return NCGC_EOK;
 }
 
@@ -156,7 +156,7 @@ void ncgc_nsetup_blowfish(ncgc_ncard_t *const card, const uint32_t ps[NCGC_NBF_P
 }
 
 ncgc_err_t ncgc_nbegin_key1(ncgc_ncard_t *const card) {
-    if (card->encryption_state != NCGC_NRAW) {
+    if (card->state != NCGC_NRAW) {
         return NCGC_ECSTATE;
     }
 
@@ -189,16 +189,16 @@ ncgc_err_t ncgc_nbegin_key1(ncgc_ncard_t *const card) {
         return r;
     }
     if (card->raw_chipid != card->key1.chipid) {
-        card->encryption_state = NCGC_NUNKNOWN;
+        card->state = NCGC_NUNKNOWN;
         return NCGC_ECRESP;
     }
-    card->encryption_state = NCGC_NKEY1;
+    card->state = NCGC_NKEY1;
     return NCGC_EOK;
 }
 
 ncgc_err_t ncgc_nread_secure_area(ncgc_ncard_t *const card, void *const dest) {
     ncgc_err_t r;
-    if (card->encryption_state != NCGC_NKEY1) {
+    if (card->state != NCGC_NKEY1) {
         return NCGC_ECSTATE;
     }
 
@@ -218,7 +218,7 @@ ncgc_err_t ncgc_nread_secure_area(ncgc_ncard_t *const card, void *const dest) {
 }
 
 ncgc_err_t ncgc_nbegin_key2(ncgc_ncard_t *const card) {
-    if (card->encryption_state != NCGC_NKEY1) {
+    if (card->state != NCGC_NKEY1) {
         return NCGC_ECSTATE;
     }
 
@@ -233,10 +233,10 @@ ncgc_err_t ncgc_nbegin_key2(ncgc_ncard_t *const card) {
         return r;
     }
     if (card->key2.chipid != card->raw_chipid) {
-        card->encryption_state = NCGC_NUNKNOWN;
+        card->state = NCGC_NUNKNOWN;
         return NCGC_ECRESP;
     }
-    card->encryption_state = NCGC_NKEY2;
+    card->state = NCGC_NKEY2;
     return NCGC_EOK;
 }
 
@@ -245,7 +245,7 @@ static __ncgc_must_check ncgc_err_t key2_read(ncgc_ncard_t *const card, uint32_t
 }
 
 ncgc_err_t ncgc_nread_data(ncgc_ncard_t *const card, const uint32_t address, void *const buf, const size_t size) {
-    if (card->encryption_state != NCGC_NKEY2) {
+    if (card->state != NCGC_NKEY2) {
         return NCGC_ECSTATE;
     }
 
