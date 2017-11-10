@@ -24,6 +24,7 @@
 
 #if defined(NCGC_PLATFORM_NTR)
 #elif defined(NCGC_PLATFORM_CTR)
+#elif defined(NCGC_PLATFORM_TEST)
 #else
     // FIXME no C++ tests yet
     #error No NCGC platform defined.
@@ -60,6 +61,8 @@ inline void delay(std::uint32_t delay) {
     c::ncgc_platform_ntr_delay(delay);
 #elif defined(NCGC_PLATFORM_CTR)
     c::ncgc_platform_ctr_delay(delay);
+#else
+    static_cast<void>(delay);
 #endif
 }
 
@@ -112,13 +115,13 @@ public:
 class Err {
     const c::ncgc_err_t err;
 public:
-    constexpr bool unsupported() const { return err == c::NCGC_NEUNSUP; }
+    constexpr bool unsupported() const { return err == c::NCGC_EUNSUP; }
     constexpr int errNo() const { return static_cast<int>(err); }
-    constexpr const char *desc() const { return c::ncgc_nerr_desc(err); }
+    const char *desc() const { return c::ncgc_err_desc(err); }
 
     constexpr Err(const c::ncgc_err_t& from) : err(from) {}
     constexpr operator c::ncgc_err_t() const { return err; }
-    constexpr operator bool() const { return err == c::NCGC_NEOK; }
+    constexpr operator bool() const { return err == c::NCGC_EOK; }
 };
 
 class NTRCard {
@@ -140,6 +143,8 @@ public:
     inline static bool cardInserted() {
         return c::ncgc_nplatform_ctr_card_inserted();
     }
+#elif defined(NCGC_PLATFORM_TEST)
+    inline NTRCard() {}
 #endif
 
     // you cannot copy this class, it does not make sense

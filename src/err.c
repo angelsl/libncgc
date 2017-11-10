@@ -17,7 +17,7 @@
 
 #include "../include/ncgc/err.h"
 
-const char *ncgc_nerr_desc(const ncgc_err_t err) {
+const char *ncgc_err_desc(const ncgc_err_t err) {
     switch (err) {
         case NCGC_EOK:
             return "No error occurred.";

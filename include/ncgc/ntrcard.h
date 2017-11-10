@@ -139,9 +139,6 @@ typedef struct ncgc_ncard {
     ncgc_nplatform_t platform;
 } ncgc_ncard_t;
 
-/// Returns a friendly description of the error.
-const char *ncgc_nerr_desc(ncgc_err_t err);
-
 /// Returns the delay before the response to a KEY1 command (KEY1 gap1)
 inline uint16_t ncgc_nflags_predelay(const ncgc_nflags_t flags) { return (uint16_t) (flags.flags & 0x1FFF); }
 /// Returns the delay after the response to a KEY1 command (KEY1 gap2)

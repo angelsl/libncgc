@@ -29,4 +29,6 @@ typedef enum {
     NCGC_EUNK = 99
 } ncgc_err_t;
 
+const char *ncgc_err_desc(const ncgc_err_t err);
+
 #endif // NCGC_ERR_H
