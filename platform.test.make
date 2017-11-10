@@ -4,6 +4,7 @@ export CXX	:=	g++
 CFLAGS		:=	$(CFLAGS) -DNCGC_PLATFORM_TEST
 CXXFLAGS	:=	$(CXXFLAGS) -DNCGC_PLATFORM_TEST
 CFILES		:=	$(CFILES) test.c
+CXXFILES	:=	$(CXXFILES) test.cpp
 OBJFILES	:=	$(OBJFILES) obj/$(PLATFORM)/ntr_blowfish.bin.o
 
 ifeq ($(OS),Windows_NT)
@@ -21,6 +22,6 @@ $(TARGET): $$(OBJFILES)
 	fi
 	@mkdir -p $(dir $@)
 	@echo $^ =\> $@
-	@$(CC) $^ -o $@
+	@$(CXX) $^ -o $@
 
 .DEFAULT_GOAL	:=	$(TARGET)

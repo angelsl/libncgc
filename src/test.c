@@ -28,8 +28,6 @@
 #include "../include/ncgc/ntrcard.h"
 #include "ncgcutil.h"
 
-#define PRINT
-
 extern const char _binary_ntr_blowfish_bin_start;
 
 enum op_type {
@@ -294,6 +292,8 @@ static ncgc_ncard_t card = {
     }
 };
 
+extern int cxxtest(void);
+
 int main() {
     ncgc_err_t r;
     if ((r = ncgc_ninit(&card, NULL))) {
@@ -326,5 +326,9 @@ int main() {
     } else {
         fprintf(stderr, "Success.\n");
     }
+
+    fprintf(stderr, "Running C++ test.\n");
+    failed |= !!cxxtest();
+
     return failed;
 }
