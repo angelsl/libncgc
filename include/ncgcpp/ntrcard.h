@@ -59,6 +59,7 @@ inline void delay(std::uint32_t delay) {
 }
 
 enum class NTRState {
+    Preinit,
     Raw,
     Key1,
     Key2,

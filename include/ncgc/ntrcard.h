@@ -50,7 +50,7 @@ typedef struct ncgc_nplatform {
 
     /// Platform reset. Called by ncgc_ninit.
     ///
-    /// `card->encryption_state` is set to `NCGC_NRAW` upon success.
+    /// `card->encryption_state` is set to `NCGC_NPREINIT` upon success.
     ///
     /// Returns `NCGC_EOK` on success, or an appropriate error on failure.
     ncgc_err_t __ncgc_must_check (*reset)(struct ncgc_ncard *card);
@@ -85,7 +85,7 @@ typedef struct ncgc_nplatform {
 } ncgc_nplatform_t;
 
 typedef enum {
-    NCGC_NRAW, NCGC_NKEY1, NCGC_NKEY2, NCGC_NUNKNOWN
+    NCGC_NUNKNOWN, NCGC_NPREINIT, NCGC_NRAW, NCGC_NKEY1, NCGC_NKEY2
 } ncgc_nencryption_state_t;
 
 typedef struct ncgc_ncard {
@@ -197,8 +197,7 @@ ncgc_err_t __ncgc_must_check ncgc_ninit_order(ncgc_ncard_t *card, void *buf, boo
 /// Initialises the card slot and card, optionally reading the header into `buf`, if `buf` is not null.
 /// If specified, `buf` should be at least 0x1000 bytes.
 ///
-/// Returns `NCGC_EOK` on success, `NCGC_ECSTATE` if the card state is not RAW and the platform
-/// reset function does not set it to RAW, or the error returned by the platform reset function,
+/// Returns `NCGC_EOK` on success, or the error returned by the platform reset function,
 /// if the platform reset function fails.
 inline ncgc_err_t __ncgc_must_check ncgc_ninit(ncgc_ncard_t *const card, void *const buf) {
     return ncgc_ninit_order(card, buf, false);

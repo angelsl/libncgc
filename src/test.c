@@ -276,7 +276,7 @@ static ncgc_err_t reset(ncgc_ncard_t *const card) {
     );
     #endif
 
-    card->encryption_state = NCGC_NRAW;
+    card->encryption_state = NCGC_NPREINIT;
     next_op(RESET);
     return NCGC_EOK;
 }
@@ -295,24 +295,28 @@ static ncgc_ncard_t card = {
 };
 
 int main() {
-    int32_t r;
+    ncgc_err_t r;
     if ((r = ncgc_ninit(&card, NULL))) {
-        fprintf(stderr, "FAIL: ncgc_ninit = %d\n", r);
+        fprintf(stderr, "FAIL: ncgc_ninit = %d (%s)\n", r, ncgc_err_desc(r));
+        failed = true;
     }
 
     ncgc_nsetup_blowfish(&card, (void *) &_binary_ntr_blowfish_bin_start);
 
     if ((r = ncgc_nbegin_key1(&card))) {
-        fprintf(stderr, "FAIL: ncgc_nbegin_key1 = %d\n", r);
+        fprintf(stderr, "FAIL: ncgc_nbegin_key1 = %d (%s)\n", r, ncgc_err_desc(r));
+        failed = true;
     }
 
     if ((r = ncgc_nbegin_key2(&card))) {
-        fprintf(stderr, "FAIL: ncgc_nbegin_key2 = %d\n", r);
+        fprintf(stderr, "FAIL: ncgc_nbegin_key2 = %d (%s)\n", r, ncgc_err_desc(r));
+        failed = true;
     }
 
     char buf[1642];
     if ((r = ncgc_nread_data(&card, 117, buf, sizeof(buf)))) {
-        fprintf(stderr, "FAIL: ncgc_nread_data = %d\n", r);
+        fprintf(stderr, "FAIL: ncgc_nread_data = %d (%s)\n", r, ncgc_err_desc(r));
+        failed = true;
     }
     #ifdef PRINT
     puts("");

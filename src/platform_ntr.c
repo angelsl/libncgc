@@ -41,7 +41,7 @@ static ncgc_err_t reset(ncgc_ncard_t *const card) {
         return NCGC_EUNK;
     }
 
-    card->encryption_state = NCGC_NRAW;
+    card->encryption_state = NCGC_NPREINIT;
     return NCGC_EOK;
 }
 

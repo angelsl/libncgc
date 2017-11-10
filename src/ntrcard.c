@@ -84,11 +84,14 @@ static void seed_key2(ncgc_ncard_t *const card) {
 
 static __ncgc_must_check ncgc_err_t init_common(ncgc_ncard_t *const card) {
     ncgc_err_t r;
-    if ((r = P(card).reset(card))) {
-        return r;
+
+    if (card->encryption_state != NCGC_NPREINIT) {
+        if ((r = P(card).reset(card))) {
+            return r;
+        }
     }
 
-    if (card->encryption_state != NCGC_NRAW) {
+    if (card->encryption_state != NCGC_NPREINIT) {
         return NCGC_ECSTATE;
     }
 
@@ -137,6 +140,7 @@ ncgc_err_t ncgc_ninit_order(ncgc_ncard_t *const card, void *const buf, bool head
         return r;
     }
 
+    card->encryption_state = NCGC_NRAW;
     return NCGC_EOK;
 }
 
