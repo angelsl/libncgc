@@ -44,6 +44,19 @@ extern "C" {
     #include "../ncgc/ntrcard.h"
 }
 #undef NCGC_CPP_WRAPPER
+
+constexpr static std::uint64_t cmdBytesToQword(const uint8_t (&command)[8]) {
+    return
+        ((std::uint64_t(0) | command[0])      ) |
+        ((std::uint64_t(0) | command[1]) <<  8) |
+        ((std::uint64_t(0) | command[2]) << 16) |
+        ((std::uint64_t(0) | command[3]) << 24) |
+        ((std::uint64_t(0) | command[4]) << 32) |
+        ((std::uint64_t(0) | command[5]) << 40) |
+        ((std::uint64_t(0) | command[6]) << 48) |
+        ((std::uint64_t(0) | command[7]) << 56);
+}
+static_assert(cmdBytesToQword({1, 2, 3, 4, 5, 6, 7, 8}) == 0x807060504030201, "cmdBytesToQword is wrong");
 }
 }
 
@@ -170,6 +183,10 @@ public:
         }
     }
 
+    inline __ncgc_must_check Err sendCommand(const uint8_t (&command)[8], void *const buf, const size_t size, NTRFlags flags, bool flagsAsIs = false) {
+        return sendCommand(c::cmdBytesToQword(command), buf, size, flags, flagsAsIs);
+    }
+
     inline __ncgc_must_check Err sendWriteCommand(const uint64_t command, void *const buf, const size_t size, NTRFlags flags, bool flagsAsIs = false) {
         c::ncgc_nflags_t flagst { static_cast<uint32_t>(flags) };
         if (flagsAsIs) {
@@ -177,6 +194,10 @@ public:
         } else {
             return ncgc_nsend_write_command(&_card, command, buf, size, flagst);
         }
+    }
+
+    inline __ncgc_must_check Err sendWriteCommand(const uint8_t (&command)[8], void *const buf, const size_t size, NTRFlags flags, bool flagsAsIs = false) {
+        return sendWriteCommand(c::cmdBytesToQword(command), buf, size, flags, flagsAsIs);
     }
 
     inline __ncgc_must_check Err sendSpi(const uint8_t *const command, const size_t command_length,
