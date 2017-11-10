@@ -49,6 +49,7 @@ public:
     constexpr int errNo() const { return static_cast<int>(err); }
     const char *desc() const { return c::ncgc_err_desc(err); }
 
+    constexpr Err() : err(c::NCGC_EUNK) {}
     constexpr Err(const c::ncgc_err_t &from) : err(from) {}
     constexpr operator c::ncgc_err_t() const { return err; }
     constexpr operator bool() const { return err == c::NCGC_EOK; }
