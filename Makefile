@@ -25,7 +25,7 @@ CXXFLAGS	:=	$(COMNFLAGS) -std=c++14 -fno-rtti -fno-exceptions -fno-use-cxa-atexi
 CFLAGS		:=	$(COMNFLAGS) -std=c11
 undefine COMNFLAGS
 
-CFILES		:=	blowfish.c ntrcard.c
+CFILES		:=	blowfish.c ntrcard.c err.c
 CXXFILES	:=
 OBJFILES	:=
 
