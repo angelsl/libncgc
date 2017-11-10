@@ -73,11 +73,11 @@ enum class NTRState {
 class NTRCard;
 class NTRFlags {
     /// The raw ROMCNT value.
-    std::uint32_t romcnt;
+    const std::uint32_t romcnt;
     friend NTRCard;
 public:
     constexpr bool bit(uint32_t bit) const { return !!(romcnt & (1 << bit)); }
-    constexpr NTRFlags bit(uint32_t bit, bool set) { return (romcnt & ~(1 << bit)) | (set ? (1 << bit) : 0); }
+    constexpr NTRFlags bit(uint32_t bit, bool set) const { return (romcnt & ~(1 << bit)) | (set ? (1 << bit) : 0); }
 
     /// Returns the delay before the response to a KEY1 command (KEY1 gap1)
     constexpr std::uint16_t preDelay() const { return static_cast<uint16_t>(romcnt & 0x1FFF); }
@@ -93,20 +93,32 @@ public:
     constexpr bool slowClock() const { return bit(27); }
 
     /// Sets the the delay before the response to a KEY1 command (KEY1 gap1)
-    constexpr NTRFlags preDelay(std::uint16_t value) { return (romcnt & ~0x1FFF) | (value & 0x1FFF); }
+    constexpr NTRFlags preDelay(std::uint16_t value) const { return (romcnt & ~0x1FFF) | (value & 0x1FFF); }
     /// Sets the delay after the response to a KEY1 command (KEY1 gap2)
-    constexpr NTRFlags postDelay(std::uint16_t value) { return (romcnt & ~(0x3F << 16)) | ((value & 0x3F) << 16); }
+    constexpr NTRFlags postDelay(std::uint16_t value) const { return (romcnt & ~(0x3F << 16)) | ((value & 0x3F) << 16); }
     /// Set if clock pulses should be sent, and the KEY2 state advanced, during the pre- and post(?)-delays
-    constexpr NTRFlags delayPulseClock(bool value) { return bit(28, value); }
+    constexpr NTRFlags delayPulseClock(bool value) const { return bit(28, value); }
     /// Set if the command is KEY2-encrypted
-    constexpr NTRFlags key2Command(bool value) { return bit(22, value).bit(14, value || bit(13)); }
+    constexpr NTRFlags key2Command(bool value) const { return bit(22, value).bit(14, value || bit(13)); }
     /// Set if the command is KEY2-encrypted
-    constexpr NTRFlags key2Response(bool value) { return bit(13, value).bit(14, value || bit(22)); }
+    constexpr NTRFlags key2Response(bool value) const { return bit(13, value).bit(14, value || bit(22)); }
     /// Set if the slower CLK rate should be used (usually for raw commands)
-    constexpr NTRFlags slowClock(bool value) { return bit(27, value); }
+    constexpr NTRFlags slowClock(bool value) const { return bit(27, value); }
 
     constexpr operator std::uint32_t() const { return romcnt; }
     constexpr NTRFlags(const std::uint32_t& from) : romcnt(from) {}
+};
+
+class Err {
+    const c::ncgc_err_t err;
+public:
+    constexpr bool unsupported() const { return err == c::NCGC_NEUNSUP; }
+    constexpr int errNo() const { return static_cast<int>(err); }
+    constexpr const char *desc() const { return c::ncgc_nerr_desc(err); }
+
+    constexpr Err(const c::ncgc_err_t& from) : err(from) {}
+    constexpr operator c::ncgc_err_t() const { return err; }
+    constexpr operator bool() const { return err == c::NCGC_NEOK; }
 };
 
 class NTRCard {
@@ -134,15 +146,15 @@ public:
     NTRCard(const NTRCard& other) = delete;
     NTRCard& operator=(const NTRCard& other) = delete;
 
-    inline __ncgc_must_check std::int32_t init(void *buffer = nullptr, bool header_first = false) {
+    inline __ncgc_must_check Err init(void *buffer = nullptr, bool header_first = false) {
         return c::ncgc_ninit_order(&_card, buffer, header_first);
     }
 
-    inline __ncgc_must_check std::int32_t beginKey1() {
+    inline __ncgc_must_check Err beginKey1() {
         return c::ncgc_nbegin_key1(&_card);
     }
 
-    inline __ncgc_must_check std::int32_t beginKey2() {
+    inline __ncgc_must_check Err beginKey2() {
         return c::ncgc_nbegin_key2(&_card);
     }
 
@@ -154,17 +166,16 @@ public:
         }
     }
 
-    inline __ncgc_must_check std::int32_t readData(const std::uint32_t address, void *const buf, const std::size_t size) {
+    inline __ncgc_must_check Err readData(const std::uint32_t address, void *const buf, const std::size_t size) {
         return c::ncgc_nread_data(&_card, address, buf, size);
     }
 
-    inline __ncgc_must_check std::int32_t readSecureArea(void *buffer) {
+    inline __ncgc_must_check Err readSecureArea(void *buffer) {
         return c::ncgc_nread_secure_area(&_card, buffer);
     }
 
-    inline __ncgc_must_check std::int32_t sendCommand(const uint64_t command, void *const buf, const size_t size, NTRFlags flags, bool flagsAsIs = false) {
-        c::ncgc_nflags_t flagst;
-        flagst.flags = static_cast<uint32_t>(flags);
+    inline __ncgc_must_check Err sendCommand(const uint64_t command, void *const buf, const size_t size, NTRFlags flags, bool flagsAsIs = false) {
+        c::ncgc_nflags_t flagst { static_cast<uint32_t>(flags) };
         if (flagsAsIs) {
             return ncgc_nsend_command_as_is(&_card, command, buf, size, flagst);
         } else {

@@ -49,9 +49,9 @@ void ncgc_platform_ctr_delay(uint32_t delay) {
     io_delay(delay);
 }
 
-static int32_t reset(ncgc_ncard_t *const card) {
+static ncgc_err_t reset(ncgc_ncard_t *const card) {
     if (REG_CARDCONF2 & 0x1) {
-        return -1;
+        return NCGC_ECMISSING;
     }
 
     REG_CARDCONF2 = 0x0C;
@@ -60,7 +60,7 @@ static int32_t reset(ncgc_ncard_t *const card) {
         while (REG_CARDCONF2 != 0);
     }
     if (REG_CARDCONF2 != 0) {
-        return -2;
+        return NCGC_EHERR;
     }
     REG_CARDCONF2 = 0x4;
     while (REG_CARDCONF2 != 0x4);
@@ -85,7 +85,7 @@ static int32_t reset(ncgc_ncard_t *const card) {
     while (REG_ROMCNT & ROMCNT_BUSY);
 
     card->encryption_state = NCGC_NRAW;
-    return 0;
+    return NCGC_EOK;
 }
 
 void ncgc_nplatform_ctr_init(ncgc_ncard_t *card) {

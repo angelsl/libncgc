@@ -26,6 +26,7 @@
 #include <string.h>
 #endif
 
+#include "err.h"
 #include "compiler.h"
 #include "blowfish.h"
 
@@ -51,27 +52,25 @@ typedef struct ncgc_nplatform {
     ///
     /// `card->encryption_state` is set to `NCGC_NRAW` upon success.
     ///
-    /// Returns 0 on success, or a platform-dependent error code between -1 and -99 on failure.
-    int32_t __ncgc_must_check (*reset)(struct ncgc_ncard *card);
+    /// Returns `NCGC_EOK` on success, or an appropriate error on failure.
+    ncgc_err_t __ncgc_must_check (*reset)(struct ncgc_ncard *card);
 
     /// Sends a command and reads the response.
     ///
-    /// Returns the number of bytes read from the card on success, or a platform-dependent error code between -1 and -99
-    /// on failure.
-    int32_t __ncgc_must_check (*send_command)(struct ncgc_ncard *card, uint64_t cmd, uint32_t read_size, void *dest, uint32_t dest_size, ncgc_nflags_t flags);
+    /// Returns `NCGC_EOK` on success, or an appropriate error on failure.
+    ncgc_err_t __ncgc_must_check (*send_command)(struct ncgc_ncard *card, uint64_t cmd, uint32_t read_size, void *dest, uint32_t dest_size, ncgc_nflags_t flags);
 
     /// Sends a write command.
     ///
-    /// Returns the number of bytes written to (excluding the command) the card on success, or a platform-dependent error code between -1 and -99
-    /// on failure.
-    int32_t __ncgc_must_check (*send_write_command)(struct ncgc_ncard *card, uint64_t cmd, const void *src, uint32_t src_size, ncgc_nflags_t flags);
+    /// Returns `NCGC_EOK` on success, or an appropriate error on failure.
+    ncgc_err_t __ncgc_must_check (*send_write_command)(struct ncgc_ncard *card, uint64_t cmd, const void *src, uint32_t src_size, ncgc_nflags_t flags);
 
     /// Sends one byte over the SPI bus, and receives one byte back.
     ///
     /// If `last` is set, SPI CS should be pulled high after the transaction.
     ///
-    /// Returns 0 on success, or a platform-dependent error code between -1 and -99 on failure.
-    int32_t __ncgc_must_check (*spi_transact)(struct ncgc_ncard *card, uint8_t in, uint8_t *out, bool last);
+    /// Returns `NCGC_EOK` on success, or an appropriate error on failure.
+    ncgc_err_t __ncgc_must_check (*spi_transact)(struct ncgc_ncard *card, uint8_t in, uint8_t *out, bool last);
 
     void (*io_delay)(uint32_t delay);
 
@@ -140,6 +139,9 @@ typedef struct ncgc_ncard {
     ncgc_nplatform_t platform;
 } ncgc_ncard_t;
 
+/// Returns a friendly description of the error.
+const char *ncgc_nerr_desc(ncgc_err_t err);
+
 /// Returns the delay before the response to a KEY1 command (KEY1 gap1)
 inline uint16_t ncgc_nflags_predelay(const ncgc_nflags_t flags) { return (uint16_t) (flags.flags & 0x1FFF); }
 /// Returns the delay after the response to a KEY1 command (KEY1 gap2)
@@ -193,17 +195,15 @@ inline ncgc_nflags_t ncgc_nflags_construct(const uint16_t predelay,
 ///
 /// If header_first is true, the header is read before the chip ID. Otherwise,
 /// the chip ID is read first.
-int32_t __ncgc_must_check ncgc_ninit_order(ncgc_ncard_t *const card, void *const buf, bool header_first);
+ncgc_err_t __ncgc_must_check ncgc_ninit_order(ncgc_ncard_t *card, void *buf, bool header_first);
 
 /// Initialises the card slot and card, optionally reading the header into `buf`, if `buf` is not null.
 /// If specified, `buf` should be at least 0x1000 bytes.
 ///
-/// The card encryption state must be RAW when this function is called.
-///
-/// Returns 0 on success, -1 if the encryption state is not currently RAW, or a positive error code if the platform
-/// reports an error during the card reset or while sending commands. If `buf` is specified, the card header will be
-/// read into `buf`.
-inline int32_t __ncgc_must_check ncgc_ninit(ncgc_ncard_t *const card, void *const buf) {
+/// Returns `NCGC_EOK` on success, `NCGC_ECSTATE` if the card state is not RAW and the platform
+/// reset function does not set it to RAW, or the error returned by the platform reset function,
+/// if the platform reset function fails.
+inline ncgc_err_t __ncgc_must_check ncgc_ninit(ncgc_ncard_t *const card, void *const buf) {
     return ncgc_ninit_order(card, buf, false);
 }
 
@@ -220,38 +220,37 @@ inline void ncgc_nsetup_blowfish_as_is(ncgc_ncard_t* card, const uint32_t ps[NCG
 /// The card encryption state must be RAW when this function is called. The blowfish P array and S boxes need to be
 /// initialised before this function is called, otherwise it will likely fail with error -2.
 ///
-/// Returns 0 on success, -1 if the encryption state is not currently RAW, -2 if the KEY1 CHIPID command result does
-/// not match the raw chip ID stored in `card`, or a positive error code if the platform reports an error while sending
-/// commands.
-int32_t __ncgc_must_check ncgc_nbegin_key1(ncgc_ncard_t* card);
+/// Returns `NCGC_EOK` on success, `NCGC_ECSTATE` if the encryption state is not currently RAW,
+/// `NCGC_ECRESP` if the KEY1 CHIPID command result does not match the raw chip ID stored in `card`, or
+/// the error returned by the platform, if a platform function fails.
+ncgc_err_t __ncgc_must_check ncgc_nbegin_key1(ncgc_ncard_t *card);
 
 /// Reads the secure area. `dest` must be at least 0x4000 bytes.
 ///
-/// Returns 0 on success, -1 if the encryption state is not currently KEY1, or a positive error code if the platform
-/// reports an error while sending commands. The secure area will be read into `dest`.
-int32_t __ncgc_must_check ncgc_nread_secure_area(ncgc_ncard_t* card, void *const dest);
+/// Returns `NCGC_EOK` on success, `NCGC_ECSTATE` if the encryption state is not currently KEY1, or
+/// the error returned by the platform, if a platform function fails. The secure area will be read into `dest`.
+ncgc_err_t __ncgc_must_check ncgc_nread_secure_area(ncgc_ncard_t *card, void *dest);
 
 /// Brings the card into KEY2 mode.
 ///
 /// The card encryption state must be KEY1 when this function is called.
 ///
-/// Returns 0 on success, -1 if the encryption state is not currently KEY1, -2 if the KEY2 CHIPID command result does
-/// not match raw the chip ID stored in `card`, or a positive error code if the platform reports an error while sending
-/// commands.
-int32_t __ncgc_must_check ncgc_nbegin_key2(ncgc_ncard_t* card);
+/// Returns `NCGC_EOK` on success, `NCGC_ECSTATE` if the encryption state is not currently KEY1,
+/// `NCGC_ECRESP` if the KEY1 CHIPID command result does not match the raw chip ID stored in `card`, or
+/// the error returned by the platform, if a platform function fails.
+ncgc_err_t __ncgc_must_check ncgc_nbegin_key2(ncgc_ncard_t *card);
 
 /// Reads the card data using the NTR 0xB7 command into `buf`, if `buf` is not NULL.
 ///
-/// Returns 0 on success, -1 if the encryption state is not currently KEY2, or a positive error code if the platform
-/// reports an error while sending commands.
-int32_t __ncgc_must_check ncgc_nread_data(ncgc_ncard_t *const card, const uint32_t address, void *const buf, const size_t size);
+/// Returns `NCGC_EOK` on success, `NCGC_ECSTATE` if the encryption state is not currently KEY2, or
+/// the error returned by the platform, if a platform function fails.
+ncgc_err_t __ncgc_must_check ncgc_nread_data(ncgc_ncard_t *card, uint32_t address, void *buf, size_t size);
 
 /// Sends a command `command`, with flags `flags` modified accordingly for the card state, to the card, and reads the
 /// response of size `size` to a buffer `buf`, if `buf` is not NULL.
 ///
-/// Returns the number of bytes read from the card on success, or a platform-dependent error code between -1 and -99
-/// on failure.
-inline int32_t __ncgc_must_check ncgc_nsend_command(ncgc_ncard_t *const card, const uint64_t command, void *const buf,
+/// Returns the error code from the first platform function that fails, if any, or `NCGC_EOK` on success.
+inline ncgc_err_t __ncgc_must_check ncgc_nsend_command(ncgc_ncard_t *const card, const uint64_t command, void *const buf,
                                                     const size_t size, ncgc_nflags_t flags) {
     if (card->encryption_state == NCGC_NKEY2) {
         ncgc_nflags_set_key2_command(&flags, true);
@@ -263,9 +262,8 @@ inline int32_t __ncgc_must_check ncgc_nsend_command(ncgc_ncard_t *const card, co
 /// Sends a command `command`, with flags `flags` used as-is, to the card, and reads the
 /// response of size `size` to a buffer `buf`, if `buf` is not NULL.
 ///
-/// Returns the number of bytes read from the card on success, or a platform-dependent error code between -1 and -99
-/// on failure.
-inline int32_t __ncgc_must_check ncgc_nsend_command_as_is(ncgc_ncard_t *const card, const uint64_t command, void *const buf,
+/// Returns the error code from the first platform function that fails, if any, or `NCGC_EOK` on success.
+inline ncgc_err_t __ncgc_must_check ncgc_nsend_command_as_is(ncgc_ncard_t *const card, const uint64_t command, void *const buf,
                                                     const size_t size, ncgc_nflags_t flags) {
     return card->platform.send_command(card, command, size, buf, buf ? size : 0, flags);
 }
@@ -273,9 +271,8 @@ inline int32_t __ncgc_must_check ncgc_nsend_command_as_is(ncgc_ncard_t *const ca
 /// Sends a command `command`, with flags `flags` modified accordingly for the card state, to the card, and then writes
 /// the data of size `size` to the card.
 ///
-/// Returns the number of bytes written to the card on success, or a platform-dependent error code between -1 and -99
-/// on failure.
-inline int32_t __ncgc_must_check ncgc_nsend_write_command(ncgc_ncard_t *const card, const uint64_t command, const void *const buf,
+/// Returns the error code from the first platform function that fails, if any, or `NCGC_EOK` on success.
+inline ncgc_err_t __ncgc_must_check ncgc_nsend_write_command(ncgc_ncard_t *const card, const uint64_t command, const void *const buf,
                                                     const size_t size, ncgc_nflags_t flags) {
     if (card->encryption_state == NCGC_NKEY2) {
         ncgc_nflags_set_key2_command(&flags, true);
@@ -287,9 +284,8 @@ inline int32_t __ncgc_must_check ncgc_nsend_write_command(ncgc_ncard_t *const ca
 /// Sends a command `command`, with flags `flags` used as-is, to the card, and then writes the data of size
 /// `size` to the card.
 ///
-/// Returns the number of bytes written to the card on success, or a platform-dependent error code between -1 and -99
-/// on failure.
-inline int32_t __ncgc_must_check ncgc_nsend_write_command_as_is(ncgc_ncard_t *const card, const uint64_t command, const void *const buf,
+/// Returns the error code from the first platform function that fails, if any, or `NCGC_EOK` on success.
+inline ncgc_err_t __ncgc_must_check ncgc_nsend_write_command_as_is(ncgc_ncard_t *const card, const uint64_t command, const void *const buf,
                                                     const size_t size, ncgc_nflags_t flags) {
     return card->platform.send_write_command(card, command, buf, size, flags);
 }
@@ -297,8 +293,8 @@ inline int32_t __ncgc_must_check ncgc_nsend_write_command_as_is(ncgc_ncard_t *co
 /// Sends an SPI command `command` of length `command_length`, then receives a response of length `response_length`
 /// into `response`, if `response` is not NULL.
 ///
-/// Returns 0 on success, or a platform-dependent error code between -1 and -99 on failure.
-int32_t __ncgc_must_check ncgc_nspi_command(ncgc_ncard_t *card, const uint8_t *command, size_t command_length,
+/// Returns the error code from the first platform function that fails, if any, or `NCGC_EOK` on success.
+ncgc_err_t __ncgc_must_check ncgc_nspi_command(ncgc_ncard_t *card, const uint8_t *command, size_t command_length,
                                             uint8_t *response, size_t response_length);
 
 #if defined(NCGC_PLATFORM_NTR)

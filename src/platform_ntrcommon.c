@@ -41,10 +41,10 @@
 #define MCNT_SPI_CS             0x0040u
 #define MCNT_SPI_BUSY           0x0080u
 
-static inline int32_t set_registers(const uint64_t cmd, const uint32_t read_size, const ncgc_nflags_t flags, bool write) {
+static inline bool set_registers(const uint64_t cmd, const uint32_t read_size, const ncgc_nflags_t flags, bool write) {
     uint32_t blksizeflag;
     switch (read_size) {
-        default: return -1;
+        default: return false;
         case 0: blksizeflag = 0; break;
         case 4: blksizeflag = 7; break;
         case 0x200: blksizeflag = 1; break;
@@ -63,15 +63,15 @@ static inline int32_t set_registers(const uint64_t cmd, const uint32_t read_size
     REG_CMD = cmd;
     REG_ROMCNT = bitflags;
 
-    return 0;
+    return true;
 }
 
-static int32_t send_command(ncgc_ncard_t *const card, const uint64_t cmd, const uint32_t read_size,
+static ncgc_err_t send_command(ncgc_ncard_t *const card, const uint64_t cmd, const uint32_t read_size,
         void *const dest, const uint32_t dest_size, const ncgc_nflags_t flags) {
     (void)card;
 
-    if (set_registers(cmd, read_size, flags, false)) {
-        return -1;
+    if (!set_registers(cmd, read_size, flags, false)) {
+        return NCGC_EARG;
     }
 
     uint32_t *cur = dest;
@@ -87,14 +87,16 @@ static int32_t send_command(ncgc_ncard_t *const card, const uint64_t cmd, const 
             ctr += 4;
         }
 	} while (REG_ROMCNT & ROMCNT_BUSY);
-    return ctr;
+    return NCGC_EOK;
 }
 
-static int32_t send_write_command(ncgc_ncard_t *const card, const uint64_t cmd,
+static ncgc_err_t send_write_command(ncgc_ncard_t *const card, const uint64_t cmd,
         const void *const src, const uint32_t src_size, const ncgc_nflags_t flags) {
     (void)card;
 
-    set_registers(cmd, src_size, flags, true);
+    if (!set_registers(cmd, src_size, flags, true)) {
+        return NCGC_EARG;
+    }
 
     const uint32_t *cur = src;
     uint32_t ctr = 0;
@@ -108,7 +110,7 @@ static int32_t send_write_command(ncgc_ncard_t *const card, const uint64_t cmd,
             ctr += 4;
         }
 	} while (REG_ROMCNT & ROMCNT_BUSY);
-    return ctr;
+    return NCGC_EOK;
 }
 
 static void seed_key2(ncgc_ncard_t *const card, uint64_t x, uint64_t y) {
@@ -137,7 +139,7 @@ inline static void io_delay(uint32_t delay) {
     );
 }
 
-static int32_t spi_transact(ncgc_ncard_t *const card, uint8_t in, uint8_t *out, bool last) {
+static ncgc_err_t spi_transact(ncgc_ncard_t *const card, uint8_t in, uint8_t *out, bool last) {
     (void)card;
     REG_MCNT = MCNT_CR1_ENABLE | MCNT_MODE_SPI | (last ? 0 : MCNT_SPI_CS);
     REG_MDATA = in;
@@ -151,5 +153,5 @@ static int32_t spi_transact(ncgc_ncard_t *const card, uint8_t in, uint8_t *out, 
         REG_MCNT = 0;
         io_delay(0x1F4);
     }
-    return 0;
+    return NCGC_EOK;
 }

@@ -173,7 +173,7 @@ static struct op *next_op(enum op_type op_type) {
     }
 }
 
-static int32_t send_command(ncgc_ncard_t *const card, const uint64_t cmdle, const uint32_t read_size,
+static ncgc_err_t send_command(ncgc_ncard_t *const card, const uint64_t cmdle, const uint32_t read_size,
         void *const dest, const uint32_t dest_size, const ncgc_nflags_t flags) {
     (void)card; (void)dest; (void)dest_size;
     const uint64_t cmd = BSWAP64(cmdle);
@@ -206,18 +206,18 @@ static int32_t send_command(ncgc_ncard_t *const card, const uint64_t cmdle, cons
             fprintf(stderr, "FAIL: COMMAND (%zu) expected flags 0x%" PRIX32 ", actual flags 0x%" PRIX32 "\n", op->index, op->command.flags, flags.flags);
         }
     }
-    return read_size;
+    return NCGC_EOK;
 }
 
-static int32_t send_write_command(ncgc_ncard_t *const card, const uint64_t cmdle,
+static ncgc_err_t send_write_command(ncgc_ncard_t *const card, const uint64_t cmdle,
         const void *const dest, const uint32_t dest_size, const ncgc_nflags_t flags) {
     (void)card; (void)cmdle; (void)dest; (void)dest_size; (void)flags;
-    return 0;
+    return NCGC_EOK;
 }
 
-static int32_t spi_transact(ncgc_ncard_t *const card, uint8_t in, uint8_t *out, bool last) {
+static ncgc_err_t spi_transact(ncgc_ncard_t *const card, uint8_t in, uint8_t *out, bool last) {
     (void)card; (void)in; (void)out; (void)last;
-    return 0;
+    return NCGC_EOK;
 }
 
 static void io_delay(uint32_t delay) {
@@ -266,7 +266,7 @@ static void seed_key2(ncgc_ncard_t *const card, uint64_t x, uint64_t y) {
     }
 }
 
-static int32_t reset(ncgc_ncard_t *const card) {
+static ncgc_err_t reset(ncgc_ncard_t *const card) {
     #ifdef PRINT
     printf(
         "{ /* cur_op = %zu */\n"
@@ -278,7 +278,7 @@ static int32_t reset(ncgc_ncard_t *const card) {
 
     card->encryption_state = NCGC_NRAW;
     next_op(RESET);
-    return 0;
+    return NCGC_EOK;
 }
 
 static ncgc_ncard_t card = {

@@ -33,16 +33,16 @@
 
 #include "platform_ntrcommon.c"
 
-static int32_t reset(ncgc_ncard_t *const card) {
+static ncgc_err_t reset(ncgc_ncard_t *const card) {
     bool (*resetfn)(void) = (bool (*)(void)) card->platform.data.fn_data;
     if (!resetfn) {
-        return -1;
+        return NCGC_EUNSUP;
     } else if (!resetfn()) {
-        return -2;
+        return NCGC_EUNK;
     }
 
     card->encryption_state = NCGC_NRAW;
-    return 0;
+    return NCGC_EOK;
 }
 
 void ncgc_platform_ntr_delay(uint32_t delay) {
