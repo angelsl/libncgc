@@ -28,6 +28,8 @@
 #include "../include/ncgc/ntrcard.h"
 #include "ncgcutil.h"
 
+#define PRINT
+
 extern const char _binary_ntr_blowfish_bin_start;
 
 enum op_type {
@@ -130,7 +132,7 @@ static void write_response(size_t op_no, void *const dest, const uint32_t dest_s
     switch (op_no) {
         default:
             failed = true;
-            fprintf(stderr, "FAIL: COMMAND (%llu) no response\n", op_no);
+            fprintf(stderr, "FAIL: COMMAND (%zu) no response\n", op_no);
             break;
         case 1:
         case 11:
@@ -160,7 +162,7 @@ static struct op *next_op(enum op_type op_type) {
         struct op* op = ops + cur_op++;
         if (op->op_type != op_type) {
             failed = true;
-            fprintf(stderr, "FAIL: %s (%llu) expected, %s actually\n", op_type_str(op_type), op->index, op_type_str(op->op_type));
+            fprintf(stderr, "FAIL: %s (%zu) expected, %s actually\n", op_type_str(op_type), op->index, op_type_str(op->op_type));
             return NULL;
         }
         return op;
@@ -177,7 +179,7 @@ static int32_t send_command(ncgc_ncard_t *const card, const uint64_t cmdle, cons
     const uint64_t cmd = BSWAP64(cmdle);
     #ifdef PRINT
     printf(
-        "{ /* cur_op = %llu */\n"
+        "{ /* cur_op = %zu */\n"
         "    .op_type = COMMAND,\n"
         "    .command = { .cmd = 0x%" PRIX64 ", .size = 0x%" PRIX32 ", .flags = 0x%" PRIX32 " }\n"
         "}, ",
@@ -189,19 +191,19 @@ static int32_t send_command(ncgc_ncard_t *const card, const uint64_t cmdle, cons
     if (op) {
         if (op->command.cmd != cmd) {
             failed = true;
-            fprintf(stderr, "FAIL: COMMAND (%llu) expected cmd 0x%" PRIX64 ", actual cmd 0x%" PRIX64 "\n", op->index, op->command.cmd, cmd);
+            fprintf(stderr, "FAIL: COMMAND (%zu) expected cmd 0x%" PRIX64 ", actual cmd 0x%" PRIX64 "\n", op->index, op->command.cmd, cmd);
         } else if (read_size) {
             write_response(op->index, dest, dest_size);
         }
 
         if (op->command.size != read_size) {
             failed = true;
-            fprintf(stderr, "FAIL: COMMAND (%llu) expected size 0x%" PRIX32 ", actual size 0x%" PRIX32 "\n", op->index, op->command.size, read_size);
+            fprintf(stderr, "FAIL: COMMAND (%zu) expected size 0x%" PRIX32 ", actual size 0x%" PRIX32 "\n", op->index, op->command.size, read_size);
         }
 
         if (op->command.flags != flags.flags) {
             failed = true;
-            fprintf(stderr, "FAIL: COMMAND (%llu) expected flags 0x%" PRIX32 ", actual flags 0x%" PRIX32 "\n", op->index, op->command.flags, flags.flags);
+            fprintf(stderr, "FAIL: COMMAND (%zu) expected flags 0x%" PRIX32 ", actual flags 0x%" PRIX32 "\n", op->index, op->command.flags, flags.flags);
         }
     }
     return read_size;
@@ -221,7 +223,7 @@ static int32_t spi_transact(ncgc_ncard_t *const card, uint8_t in, uint8_t *out, 
 static void io_delay(uint32_t delay) {
     #ifdef PRINT
     printf(
-        "{ /* cur_op = %llu */\n"
+        "{ /* cur_op = %zu */\n"
         "    .op_type = DELAY,\n"
         "    .delay = 0x%" PRIX32 "\n"
         "}, ",
@@ -233,7 +235,7 @@ static void io_delay(uint32_t delay) {
     if (op) {
         if (op->delay != delay) {
             failed = true;
-            fprintf(stderr, "FAIL: DELAY (%llu) expected delay 0x%" PRIX32 ", actual delay 0x%" PRIX32 "\n", op->index, op->delay, delay);
+            fprintf(stderr, "FAIL: DELAY (%zu) expected delay 0x%" PRIX32 ", actual delay 0x%" PRIX32 "\n", op->index, op->delay, delay);
         }
     }
 }
@@ -242,7 +244,7 @@ static void seed_key2(ncgc_ncard_t *const card, uint64_t x, uint64_t y) {
     (void)card;
     #ifdef PRINT
     printf(
-        "{ /* cur_op = %llu */\n"
+        "{ /* cur_op = %zu */\n"
         "    .op_type = SEED_KEY2,\n"
         "    .seed = { .x = 0x%" PRIX64 ", .y = 0x%" PRIX64 " }\n"
         "}, ",
@@ -254,12 +256,12 @@ static void seed_key2(ncgc_ncard_t *const card, uint64_t x, uint64_t y) {
     if (op) {
         if (op->seed.x != x) {
             failed = true;
-            fprintf(stderr, "FAIL: SEED_KEY2 (%llu) expected x 0x%" PRIX64 ", actual x 0x%" PRIX64 "\n", op->index, op->seed.x, x);
+            fprintf(stderr, "FAIL: SEED_KEY2 (%zu) expected x 0x%" PRIX64 ", actual x 0x%" PRIX64 "\n", op->index, op->seed.x, x);
         }
 
         if (op->seed.y != y) {
             failed = true;
-            fprintf(stderr, "FAIL: SEED_KEY2 (%llu) expected y 0x%" PRIX64 ", actual y 0x%" PRIX64 "\n", op->index, op->seed.y, y);
+            fprintf(stderr, "FAIL: SEED_KEY2 (%zu) expected y 0x%" PRIX64 ", actual y 0x%" PRIX64 "\n", op->index, op->seed.y, y);
         }
     }
 }
@@ -267,7 +269,7 @@ static void seed_key2(ncgc_ncard_t *const card, uint64_t x, uint64_t y) {
 static int32_t reset(ncgc_ncard_t *const card) {
     #ifdef PRINT
     printf(
-        "{ /* cur_op = %llu */\n"
+        "{ /* cur_op = %zu */\n"
         "    .op_type = RESET\n"
         "}, ",
         cur_op
