@@ -183,6 +183,20 @@ public:
         }
     }
 
+    inline __ncgc_must_check Err sendWriteCommand(const uint64_t command, void *const buf, const size_t size, NTRFlags flags, bool flagsAsIs = false) {
+        c::ncgc_nflags_t flagst { static_cast<uint32_t>(flags) };
+        if (flagsAsIs) {
+            return ncgc_nsend_write_command_as_is(&_card, command, buf, size, flagst);
+        } else {
+            return ncgc_nsend_write_command(&_card, command, buf, size, flagst);
+        }
+    }
+
+    inline __ncgc_must_check Err sendSpi(const uint8_t *const command, const size_t command_length,
+                                         uint8_t *const response, const size_t response_length) {
+        return c::ncgc_nspi_command(&_card, command, command_length, response, response_length);
+    }
+
     inline NTRState state() {
         return static_cast<NTRState>(_card.encryption_state);
     }
