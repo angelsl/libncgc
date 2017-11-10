@@ -52,7 +52,7 @@ public:
     constexpr Err() : err(c::NCGC_EUNK) {}
     constexpr Err(const c::ncgc_err_t &from) : err(from) {}
     constexpr operator c::ncgc_err_t() const { return err; }
-    constexpr operator bool() const { return err == c::NCGC_EOK; }
+    constexpr operator bool() const { return err != c::NCGC_EOK; }
 };
 }
 #endif // NCGCPP_ERR_H
