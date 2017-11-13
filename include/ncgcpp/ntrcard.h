@@ -158,7 +158,7 @@ public:
         return c::ncgc_nbegin_key2(&_card);
     }
 
-    inline void setBlowfishState(const std::uint32_t (&ps)[NCGC_NBF_PS_N32], bool as_is = false) {
+    inline void setBlowfishState(const std::uint8_t (&ps)[NCGC_NBF_PS_N32*4], bool as_is = false) {
         if (as_is) {
             c::ncgc_nsetup_blowfish_as_is(&_card, ps);
         } else {

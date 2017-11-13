@@ -144,7 +144,7 @@ ncgc_err_t ncgc_ninit_order(ncgc_ncard_t *const card, void *const buf, bool head
     return NCGC_EOK;
 }
 
-void ncgc_nsetup_blowfish(ncgc_ncard_t *const card, const uint32_t ps[NCGC_NBF_PS_N32]) {
+void ncgc_nsetup_blowfish(ncgc_ncard_t *const card, const uint8_t ps[NCGC_NBF_PS_N32*4]) {
     card->key1.key[0] = card->hdr.game_code;
     card->key1.key[1] = card->hdr.game_code >> 1;
     card->key1.key[2] = card->hdr.game_code << 1;
