@@ -3,9 +3,6 @@ export CXX	:=	g++
 
 CFLAGS		:=	$(CFLAGS) -DNCGC_PLATFORM_TEST
 CXXFLAGS	:=	$(CXXFLAGS) -DNCGC_PLATFORM_TEST
-CFILES		:=	$(CFILES)
-CXXFILES	:=	$(CXXFILES)
-OBJFILES	:=	$(OBJFILES)
 
 ifeq ($(OS),Windows_NT)
 	TARGET := out/$(PLATFORM)/test.exe
@@ -25,3 +22,5 @@ $(TARGET): $$(OBJFILES) obj/$(PLATFORM)/ntr_blowfish.bin.o obj/$(PLATFORM)/test.
 	@mkdir -p $(dir $@)
 	@echo $^ =\> $@
 	@$(CXX) $^ -o $@
+
+-include obj/$(PLATFORM)/test.c.d obj/$(PLATFORM)/test.cpp.d
