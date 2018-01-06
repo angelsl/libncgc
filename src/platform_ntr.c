@@ -58,6 +58,7 @@ void ncgc_nplatform_ntr_init(ncgc_ncard_t *card, bool (*resetfn)(void)) {
         .spi_transact = spi_transact,
         .io_delay = ncgc_platform_ntr_delay,
         .seed_key2 = seed_key2,
-        .hw_key2 = true
+        .hw_key2 = true,
+        .ignore_key1 = false
     };
 }

@@ -61,6 +61,9 @@ static uint64_t key1_construct(ncgc_ncard_t *const card, const uint8_t cmdarg, c
         ((ij & 0xF00000ull) >> 4 /* << 16 - 20 */) | ((ij & 0xFF000ull) << 12 /* 24 - 12 */) | ((ij & 0xFF0ull) << 28 /* 32 - 4 */) |
         ((ij & 0xFull) << 44 /* 44 - 0 */) | ((k & 0xF0000ull) << 24 /* 40 - 16 */) | ((k & 0xFF00ull) << 40 /* 48 - 8 */) |
         ((k & 0xFFull) << 56 /* 56 - 0 */);
+    if (card->platform.ignore_key1) {
+        return cmd;
+    }
     cmd = BSWAP64(cmd);
     ncgc_nbf_encrypt(card->key1.ps, (void *) &cmd);
     return BSWAP64(cmd);

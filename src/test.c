@@ -288,7 +288,8 @@ static ncgc_ncard_t card = {
         .spi_transact = spi_transact,
         .io_delay = io_delay,
         .seed_key2 = seed_key2,
-        .hw_key2 = true
+        .hw_key2 = true,
+        .ignore_key1 = false
     }
 };
 

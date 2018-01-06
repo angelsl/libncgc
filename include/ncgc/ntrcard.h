@@ -82,6 +82,9 @@ typedef struct ncgc_nplatform {
     /// True if the platform has hardware KEY2 support. In that case, in KEY2 mode, commands are passed to `send_command`
     /// in plaintext. The platform should do the necessary encryption of the command bytes and decryption of data bytes.
     bool hw_key2;
+
+    /// True if KEY1 encryption should be skipped (for testing purposes) i.e. commands passed to the platform in plaintext
+    bool ignore_key1;
 } ncgc_nplatform_t;
 
 typedef enum {

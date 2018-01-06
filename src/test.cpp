@@ -58,6 +58,7 @@ c::ncgc_err_t platformSpiTransact(c::ncgc_ncard_t *card, std::uint8_t bin, std::
 extern "C" int cxxtest() {
     c::ncgc_nplatform_t& p = card.rawState().platform;
     p.hw_key2 = true;
+    p.ignore_key1 = false;
     p.io_delay = platformIoDelay;
     p.reset = platformReset;
     p.seed_key2 = platformSeedKey2;
