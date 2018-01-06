@@ -3,7 +3,7 @@
 VPATH		:=
 
 PLATFORMS	:=	$(patsubst platform.%.make,%,$(shell ls platform.*.make))
-.PHONY: please_specify_target clean fordka $(PLATFORMS)
+.PHONY: please_specify_target clean fordka testbin $(PLATFORMS)
 
 please_specify_target:
 	$(info Supported platforms: $(PLATFORMS))
