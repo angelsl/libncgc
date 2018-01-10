@@ -23,7 +23,7 @@ else
 COMNFLAGS	:=	-g -O2 -fdiagnostics-color=always -D_GNU_SOURCE -Wall -Wextra -pedantic
 CXXFLAGS	:=	$(COMNFLAGS) -std=c++14 -fno-rtti -fno-exceptions -fno-use-cxa-atexit
 CFLAGS		:=	$(COMNFLAGS) -std=c11
-undefine COMNFLAGS
+#undefine COMNFLAGS
 
 CFILES		:=	blowfish.c ntrcard.c err.c
 CXXFILES	:=
